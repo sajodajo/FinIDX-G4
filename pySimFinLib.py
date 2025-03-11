@@ -18,7 +18,7 @@ class pySimFin:
                         refresh_days_shareprices=1)
 
         df_prices = hub.load_shareprices(variant='daily').sort_index()
-        df_prices = df_prices.loc[start:end]
+        df_prices = df_prices.loc[pd.IndexSlice[:, start:end], :]
         return df_prices
     
     def get_financial_statement(self,tickers, start, end,period='quarterly'):
