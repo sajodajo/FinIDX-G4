@@ -35,8 +35,10 @@ class pySimFin:
                 return company['Ticker']  
         return None  
 
-    def get_share_prices(self,companies,start,end):
-        tickers = list(map(lambda x: self.tickerMatch(x), companies))     
+    def get_share_prices(self,companies:list,start,end):
+
+        tickers = list(map(lambda x: self.tickerMatch(x), companies))   
+          
         hub = sf.StockHub(market='us', tickers=tickers,
                         refresh_days_shareprices=1)
 
