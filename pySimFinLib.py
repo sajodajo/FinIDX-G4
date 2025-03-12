@@ -53,6 +53,11 @@ class pySimFin:
         df_statements = df_statements.loc[idx[tickers, start:end], :]
         return df_statements
     
+    def get_companies(self,period='annual'):
+        df_statements = sf.load_income(variant=period).sort_index()
+        df_statements['Ticker'] = df_statements.index.get_level_values(0)
+        return list(df_statements['Ticker'].unique())
+    
 
     
 
