@@ -100,3 +100,4 @@ with tab10:
     st.pyplot(fig)
 
 st.header("About the Project")
+st.text("This project is a dashboard using data from SimFin API to analyze the stock price of a company. The dashboard uses ARCH and GARCH models to analyze the stock price data. ARCH and GARCH models are used to model the volatility of the stock price data. The dashboard also includes a VaR analysis and Expected Shortfall analysis to model the risk of the stock price data. The dashboard is built using Streamlit and Python.")
