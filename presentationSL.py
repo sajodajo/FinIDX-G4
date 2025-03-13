@@ -16,7 +16,7 @@ psf = pySimFin2()
 st.sidebar.title("Filter")
 
 companydf = psf.getCompanyList()
-companyName = st.sidebar.selectbox("Select a company:", companydf['name'])
+companyName = st.sidebar.selectbox("Select a company:", companydf['name'].sort_values())
 ticker = companydf.loc[companydf['name'] == companyName, 'ticker'].values[0]
 
 minDate = '2019-04-15'
