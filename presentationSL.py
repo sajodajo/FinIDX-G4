@@ -101,4 +101,4 @@ with tab10:
 
 st.header("About the Project")
 st.text("This project is a dashboard using data from SimFin API to analyze the stock price of a company. The dashboard uses ARCH and GARCH models to analyze the stock price data. ARCH and GARCH models are used to model the volatility of the stock price data. The dashboard also includes a VaR analysis and Expected Shortfall analysis to model the risk of the stock price data. The dashboard is built using Streamlit and Python.")
-st.image("https://cdn.startbase.com/images/99fbd18802aca0aeff235d76889d1821/7e6d890dde84861/", caption="Image from URL", width=200)
+st.image("https://cdn.startbase.com/images/99fbd18802aca0aeff235d76889d1821/7e6d890dde84861/", caption=None,width=400)
