@@ -4,3 +4,4 @@ numpy
 simfin
 matplotlib
 statsmodels
+arch

@@ -1,12 +1,12 @@
 import streamlit as st
-
-st.set_page_config(layout = 'wide')
-                   
-
 from pySimFinLib import pySimFin
 import datetime
-import ARCHLib as arch
+import ARCHLib
 import numpy as np
+
+
+st.set_page_config(layout = 'wide')
+
 
 psf = pySimFin()
 
@@ -33,54 +33,54 @@ st.header(f'{companyName.title()} Share Price Analysis')
 df = psf.get_share_prices(companies,start_date,end_date)
 df = df.droplevel(0)
 df = df.drop(columns='Dividend')
-df = arch.calcColumns(df)
+df = ARCHLib.calcColumns(df)
 
 ## TIME SERIES ##
 st.header("Time Series")
-fig, ax = arch.plotTS(df,companies)
+fig, ax = ARCHLib.plotTS(df,companies)
 st.pyplot(fig)
 
 ## VISUALIZE LOG RETURNS ##
 st.header("Log-Returns")
-fig, ax = arch.plotLR(df, arch.smoothed_abs,companies)
+fig, ax = arch.plotLR(df, ARCHLib.smoothed_abs,companies)
 st.pyplot(fig)
 
 ## FIT NORMAL DIST ##
 st.header("Normal Distribution")
-fig = arch.fitNormalDist(df,companies)
+fig = ARCHLib.fitNormalDist(df,companies)
 st.pyplot(fig)
 
 ## FIT NORMAL DIST ##
 st.header("T Distribution")
-fig = arch.fitTDist(df,companies)
+fig = ARCHLib.fitTDist(df,companies)
 st.pyplot(fig)
 
-## FIT GARCH ##
+## FIT GARCHLib ##
 st.header("GARCH")
-fig, returns, garch_fit = arch.fitGARCH(df)
+fig, returns, garch_fit = ARCHLib.fitGARCH(df)
 st.pyplot(fig)
 
 ## VISUALIZE VOLATILITY ##
 st.subheader("GARCH - Volatility")
-fig, ax = arch.visVolatility(df, returns, garch_fit)
+fig, ax = ARCHLib.visVolatility(df, returns, garch_fit)
 st.pyplot(fig)
 
 ## RESIDUAL ANALYSIS ##
 st.subheader("GARCH - Residual Analysis")
-fig, ax = arch.residualAnalysis(garch_fit)
+fig, ax = ARCHLib.residualAnalysis(garch_fit)
 st.pyplot(fig)
 
 ## VaR ANALYSIS ##
 st.subheader("Risk Modelling - VaR Analysis")
-fig, confidence_levels = arch.VaR(df)
+fig, confidence_levels = ARCHLib.VaR(df)
 st.pyplot(fig)
 
 ## EXPECTED SHORTFALL ##
 st.subheader("Risk Modelling - Expected Shortfall")
-fig = arch.expectedShortfall(confidence_levels)
+fig = ARCHLib.expectedShortfall(confidence_levels)
 st.pyplot(fig)
 
 ## DYNAMIC RISK MODELLING ##
 st.subheader("Dynamic Risk Modelling")
-fig = arch.dynamicRM(garch_fit)
+fig = ARCHLib.dynamicRM(garch_fit)
 st.pyplot(fig)
