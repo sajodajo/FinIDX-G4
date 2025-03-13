@@ -135,12 +135,12 @@ def fitTDist(df,companyName):
     fCompany = f"{companyName.title()}"
 
     # Print fitted parameters and statistics
-    print(f"Fitted t-distribution parameters:")
-    print(f"Degrees of Freedom: {df_t:.4f}")
-    print(f"Location: {loc_t:.4f}")
-    print(f"Scale: {scale_t:.4f}")
-    print(f"Variance: {variance_t:.4f}")
-    print(f"Kurtosis: {'Infinite' if np.isinf(kurtosis_t) else f'{kurtosis_t:.4f}'}")
+    fittdpam = print(f"Fitted t-distribution parameters:")
+    dof = print(f"Degrees of Freedom: {df_t:.4f}")
+    loc = print(f"Location: {loc_t:.4f}")
+    scale = print(f"Scale: {scale_t:.4f}")
+    variance = print(f"Variance: {variance_t:.4f}")
+    kurtosis = print(f"Kurtosis: {'Infinite' if np.isinf(kurtosis_t) else f'{kurtosis_t:.4f}'}")
 
     # Plot histogram with normal and t-distribution curves
     fig = plt.figure(figsize=(10, 5))
@@ -161,7 +161,7 @@ def fitTDist(df,companyName):
     plt.grid()
     plt.show()
 
-    return fig
+    return fig, fittdpam, dof, loc, scale, variance, kurtosis
 
 '''def fitGARCH(df):
     # Prepare the data
