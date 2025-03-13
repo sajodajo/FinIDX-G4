@@ -2,7 +2,6 @@ import pandas as pd
 import seaborn as sns
 import simfin as sf
 from simfin.names import *
-import yfinance as yf
 import matplotlib.pyplot as plt
 
 
