@@ -42,7 +42,7 @@ def plotTS(df,companyName):
     endYear = df.index[-1].strftime("%b. %Y")
     fCompany = f"{companyName.title()}"
 
-    ax.plot(df.index, df['Opening Price'], color='blue', alpha=0.6, label='Opening Price')
+    ax.plot(df.index, df['Opening Price'], color='#389cfc', alpha=0.6, label='Opening Price')
     ax.set_ylabel(f"{fCompany.title()} Share Price")
     ax.set_title(f"{fCompany.title()} Share Price ({startYear}-{endYear})")
     ax.legend()
@@ -63,7 +63,7 @@ def plotLR(df, smoothed_abs,companyName):
 
     # Plot log-returns
     top_ax = axes[0]
-    top_ax.plot(df.index, df['Log_Return'], color='blue', alpha=0.6, label='Log-Returns')
+    top_ax.plot(df.index, df['Log_Return'], color='#389cfc', alpha=0.6, label='Log-Returns')
     top_ax.set_ylabel("Log-Returns (%)")
     top_ax.set_title(f"{fCompany} Log-Returns ({startYear}-{endYear})")
     top_ax.legend()
@@ -72,7 +72,7 @@ def plotLR(df, smoothed_abs,companyName):
     bottom_ax = axes[1]
     bottom_ax.plot(df.index, df['Abs_Log_Return'], color='gray', alpha=0.5, label='Absolute Log-Returns')
     bottom_ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%y"))  
-    bottom_ax.plot(df.index, df['Rolling_Std'], color='red', label='60-Day Rolling Std')
+    bottom_ax.plot(df.index, df['Rolling_Std'], color='#389cfc', label='60-Day Rolling Std')
     bottom_ax.plot(df.index, smoothed_abs[:, 1], color='black', label='LOESS Smoothed Abs Returns')
     bottom_ax.set_ylabel(f"{fCompany} Absolute Log-Returns (%)")
     bottom_ax.set_title(f"{fCompany} Absolute Log-Returns with LOESS and Rolling Std (2019-2024)")
@@ -105,7 +105,7 @@ def fitNormalDist(df,companyName):
 
     # Plot histogram with overlaid normal distribution
     fig = plt.figure(figsize=(10, 5))
-    count, bins, _ = plt.hist(df['Log_Return'], bins=50, alpha=0.7, color='blue', edgecolor='black', density=True)
+    count, bins, _ = plt.hist(df['Log_Return'], bins=50, alpha=0.7, color='#389cfc', edgecolor='black', density=True)
 
     # Compute normal distribution curve
     x = np.linspace(bins[0], bins[-1], 100)
@@ -190,7 +190,7 @@ def visVolatility(df,returns, garch_fit):
     fig, axs = plt.subplots(2, 1, figsize=(14, 12))
 
     # Plot 1: Log returns with shaded ±2 conditional standard deviations
-    axs[0].plot(returns, label='Log Returns', color='blue')
+    axs[0].plot(returns, label='Log Returns', color='#389cfc')
     upper_bound = 2 * conditional_volatility
     lower_bound = -2 * conditional_volatility
     axs[0].fill_between(df.index, lower_bound, upper_bound, color='red', alpha=0.2, label='±2 Conditional Std Dev')
@@ -202,7 +202,7 @@ def visVolatility(df,returns, garch_fit):
 
     # Plot 2: Conditional Std Dev vs. Absolute Log Returns
     axs[1].plot(absolute_log_returns, label='|Log Returns|', color='gray', alpha=0.2)
-    axs[1].plot(conditional_volatility, label='Conditional Std Dev (GARCH)', color='red')
+    axs[1].plot(conditional_volatility, label='Conditional Std Dev (GARCH)', color='#389cfc')
     axs[1].set_title('Conditional Std Dev vs Absolute Log Returns')
     axs[1].set_xlabel('Time')
     axs[1].set_ylabel('Values')
@@ -221,7 +221,7 @@ def residualAnalysis(garch_fit):
     fig, axes = plt.subplots(2, 2, figsize=(12, 10))
 
     # 1. Standardized residual time series
-    sns.lineplot(x=std_residuals.index, y=std_residuals, ax=axes[0, 0], color='blue')
+    sns.lineplot(x=std_residuals.index, y=std_residuals, ax=axes[0, 0], color='#389cfc')
     axes[0, 0].set_title("Standardized Residuals Time Series")
     axes[0, 0].set_ylabel("Standardized Residuals")
     axes[0, 0].axhline(y=0, color='black', linestyle='--', alpha=0.6)
@@ -239,7 +239,7 @@ def residualAnalysis(garch_fit):
     x = np.linspace(min(std_residuals), max(std_residuals), 100)
     pdf_t = t.pdf(x, df_t, loc=loc_t, scale=scale_t)
 
-    axes[1, 1].hist(std_residuals, bins=50, density=True, alpha=0.6, color='blue', edgecolor='black', label="Residuals")
+    axes[1, 1].hist(std_residuals, bins=50, density=True, alpha=0.6, color='#389cfc', edgecolor='black', label="Residuals")
     axes[1, 1].plot(x, pdf_t, color='red', lw=2, label=f't-Dist (df={df_t:.2f})')
     axes[1, 1].set_title("Histogram of Standardized Residuals with t-Distribution")
     axes[1, 1].legend()
@@ -269,7 +269,7 @@ def VaR(df,companyName):
     fig = plt.figure(figsize=(10, 6))
     plt.plot(confidence_levels * 100, VaR_hist, label='Historical VaR', linestyle='dashed', color='black')
     plt.plot(confidence_levels * 100, VaR_norm, label='Normal VaR', linestyle='dotted', color='red')
-    plt.plot(confidence_levels * 100, VaR_t, label='t-Distribution VaR', linestyle='solid', color='green')
+    plt.plot(confidence_levels * 100, VaR_t, label='t-Distribution VaR', linestyle='solid', color='#389cfc')
 
     plt.xlabel("Confidence Level (%)")
     plt.ylabel("Log-Returns")
@@ -301,7 +301,7 @@ def expectedShortfall(confidence_levels,companyName):
     fig = plt.figure(figsize=(10, 6))
     plt.plot(confidence_levels * 100, ES_hist, label='Historical ES', linestyle='dashed', color='black')
     plt.plot(confidence_levels * 100, ES_norm, label='Normal ES', linestyle='dotted', color='red')
-    plt.plot(confidence_levels * 100, ES_t, label='t-Distribution ES', linestyle='solid', color='green')
+    plt.plot(confidence_levels * 100, ES_t, label='t-Distribution ES', linestyle='solid', color='#389cfc')
     plt.xlabel("Confidence Level (%)")
     plt.ylabel("Log-Returns")
     plt.title(f"{fCompany} Expected Shortfall (ES) Estimates Across Confidence Levels")
@@ -330,7 +330,7 @@ def dynamicRM(garch_fit,companyName):
     # Plot time series of negative log-returns with dynamic VaR
     fig = plt.figure(figsize=(12, 6))
     plt.plot(-returns, label="Negative Log-Returns", color='blue', alpha=0.6)
-    plt.plot(VaR_95, label="95% Dynamic VaR", linestyle='dashed', color='red')
+    plt.plot(VaR_95, label="95% Dynamic VaR", linestyle='dashed', color='#389cfc')
     plt.plot(VaR_99, label="99% Dynamic VaR", linestyle='solid', color='black')
 
     plt.xlabel("Date")
