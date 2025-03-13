@@ -144,7 +144,7 @@ def fitTDist(df,companyName):
 
     # Plot histogram with normal and t-distribution curves
     fig = plt.figure(figsize=(10, 5))
-    count, bins, _ = plt.hist(df['Log_Return'], bins=50, alpha=0.7, color='blue', edgecolor='black', density=True)
+    count, bins, _ = plt.hist(df['Log_Return'], bins=50, alpha=0.7, color='#389cfc', edgecolor='black', density=True)
 
     # Compute normal and t-distribution curves
     x = np.linspace(bins[0], bins[-1], 100)
@@ -163,7 +163,7 @@ def fitTDist(df,companyName):
 
     return fig
 
-def fitGARCH(df):
+'''def fitGARCH(df):
     # Prepare the data
     global returns
     returns = df['Log_Return'].dropna()
@@ -177,6 +177,28 @@ def fitGARCH(df):
 
     # Plot GJR-GARCH model results
     fig = garch_fit.plot()
+
+    return fig, returns, garch_fit'''
+
+def fitGARCH(df):
+    # Prepare the data
+    global returns
+    returns = df['Log_Return'].dropna()
+
+    # Fit GARCH(1,1) model with t-distributed errors
+    garch_model = arch_model(returns, mean='AR', lags=1, vol='Garch', p=1, o=0, q=1, dist='t')
+    global garch_fit
+    garch_fit = garch_model.fit(disp='off')
+    print("\nModel Summary:")
+    print(garch_fit.summary())
+
+    # Plot GARCH model results
+    fig = garch_fit.plot()
+
+    # Customize line colors
+    ax = fig.axes[0]  # Access the main plot axis
+    for line in ax.get_lines():
+        line.set_color('#389cfc')  # Change all lines to red
 
     return fig, returns, garch_fit
 
