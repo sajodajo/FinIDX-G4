@@ -72,6 +72,21 @@ class pySimFin:
 
         return pd.DataFrame(response['data'], columns=response['columns'])
     
+    def getStockPrices(ticker, start_date, end_date):
+        load_dotenv()
+        API_KEY = os.getenv('API_KEY')
+        
+        url = f"https://backend.simfin.com/api/v3/companies/prices/compact?ticker={ticker}&start={start_date}&end={end_date}"
+
+        headers = {
+            "accept": "application/json",
+            "Authorization": API_KEY
+        }
+
+        response = requests.get(url, headers=headers).json()
+
+        return pd.DataFrame(response[0]['data'], columns=response[0]['columns'])
+        #return pd.DataFrame(response)
 
     
 

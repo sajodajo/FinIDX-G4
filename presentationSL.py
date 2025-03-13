@@ -30,7 +30,7 @@ except (ValueError,TypeError,NameError):
 st.header(f'{companyName.title()} Share Price Analysis')
 
 ## GET DATA ##
-df = psf.get_share_prices(companies,start_date,end_date)
+df = psf.getStockPrices(companies,start_date,end_date)
 df = df.droplevel(0)
 df = df.drop(columns='Dividend')
 df = ARCHLib.calcColumns(df)
