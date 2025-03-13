@@ -3,16 +3,19 @@ import seaborn as sns
 import simfin as sf
 from simfin.names import *
 import matplotlib.pyplot as plt
+import requests
+from dotenv import load_dotenv
+import os
+import pandas as pd
 
 
 class pySimFin:
 
     def __init__(self):
-        self.api_key = '70d5d920-9f9e-4062-9311-1b4df7c98ba4'
-        sf.set_data_dir('~/simfin_data/')
-        sf.load_api_key(path='~/simfin_api_key.txt')
-        sf.set_api_key(api_key='70d5d920-9f9e-4062-9311-1b4df7c98ba4')
-        sns.set_style("whitegrid")
+            load_dotenv()  
+            self.api_key = os.getenv('API_KEY') 
+            if not self.api_key:
+                raise ValueError("API_KEY not found in environment variables")
 
     def getTickerMap(self):
         import requests
@@ -56,6 +59,18 @@ class pySimFin:
         df_statements = sf.load_income(variant=period).sort_index()
         df_statements['Ticker'] = df_statements.index.get_level_values(0)
         return list(df_statements['Ticker'].unique())
+    
+    def getCompanyInfo(self,ticker):
+        load_dotenv()
+        API_KEY = os.getenv('API_KEY')
+        headers = {
+            "accept": "application/json",
+            "Authorization": API_KEY
+        }
+        url = "https://backend.simfin.com/api/v3/companies/general/compact?ticker=" + ticker
+        response = requests.get(url, headers=headers).json()
+
+        return pd.DataFrame(response['data'], columns=response['columns'])
     
 
     
