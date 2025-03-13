@@ -98,3 +98,5 @@ with tab10:
     st.subheader("Dynamic Risk Modelling")
     fig = ARCHLib.dynamicRM(garch_fit,companyName)
     st.pyplot(fig)
+
+st.header("About the Project")
