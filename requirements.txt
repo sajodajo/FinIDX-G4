@@ -2,4 +2,4 @@ seaborn
 pandas
 numpy
 simfin
-matplotlib.pyplot
+matplotlib
