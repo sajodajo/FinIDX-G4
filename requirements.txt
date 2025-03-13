@@ -3,3 +3,4 @@ pandas
 numpy
 simfin
 matplotlib
+statsmodels
