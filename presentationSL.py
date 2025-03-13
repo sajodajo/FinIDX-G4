@@ -3,14 +3,16 @@ from pySimFinLib import pySimFin
 import datetime
 import ARCHLib
 import numpy as np
+import arch
+from psf2 import pySimFin2
 
 
 st.set_page_config(layout = 'wide')
 
 
-psf = pySimFin()
+psf = pySimFin2()
 
-## SIDEBAR SELECTORS ##
+'''## SIDEBAR SELECTORS ##
 st.sidebar.title("Filter")
 
 companydf = psf.getTickerMap()[psf.getTickerMap()['Ticker'].isin(psf.get_companies())]
@@ -24,35 +26,40 @@ today1yrAgo = datetime.date.today() - datetime.timedelta(days=365)
 try:
     start_date, end_date = st.sidebar.date_input("Select a date range", [minDate, today1yrAgo],min_value=minDate,max_value=today1yrAgo)
 except (ValueError,TypeError,NameError):
-    pass 
+    pass '''
+
+companyName = 'Apple Inc'
+ticker = 'AAPL'
+start_date = '2019-04-15'
+end_date = '2021-04-15'
 
 ## HEADER ##
 st.header(f'{companyName.title()} Share Price Analysis')
 
 ## GET DATA ##
-df = psf.getStockPrices(companies,start_date,end_date)
+df = psf.getStockPrices(ticker,start_date,end_date)
 df = df.droplevel(0)
 df = df.drop(columns='Dividend')
 df = ARCHLib.calcColumns(df)
 
 ## TIME SERIES ##
 st.header("Time Series")
-fig, ax = ARCHLib.plotTS(df,companies)
+fig, ax = ARCHLib.plotTS(df,companyName)
 st.pyplot(fig)
 
 ## VISUALIZE LOG RETURNS ##
 st.header("Log-Returns")
-fig, ax = arch.plotLR(df, ARCHLib.smoothed_abs,companies)
+fig, ax = ARCHLib.plotLR(df, ARCHLib.smoothed_abs,companyName)
 st.pyplot(fig)
 
 ## FIT NORMAL DIST ##
 st.header("Normal Distribution")
-fig = ARCHLib.fitNormalDist(df,companies)
+fig = ARCHLib.fitNormalDist(df,companyName)
 st.pyplot(fig)
 
 ## FIT NORMAL DIST ##
 st.header("T Distribution")
-fig = ARCHLib.fitTDist(df,companies)
+fig = ARCHLib.fitTDist(df,companyName)
 st.pyplot(fig)
 
 ## FIT GARCHLib ##

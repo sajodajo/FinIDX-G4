@@ -30,31 +30,28 @@ def calcColumns(df):
 
     return df
 
-def plotTS(df,companies):
+def plotTS(df,companyName):
     # Plot time series
     fig, ax = plt.subplots(figsize=(12, 6))
     startYear = df.index[0].strftime("%b. %Y")
     endYear = df.index[-1].strftime("%b. %Y")
-    fCompany = f"{', '.join(company.capitalize() for company in companies)}"
+    fCompany = f"{companyName.capitalize()}"
 
     ax.plot(df.index, df['Close'], color='blue', alpha=0.6, label='Close Price')
     ax.set_ylabel(f"{fCompany} Share Price")
     ax.set_title(f"{fCompany} Share Price ({startYear}-{endYear})")
     ax.legend()
 
-    #plt.tight_layout()
-    #plt.show()
-
     return fig, ax
 
-def plotLR(df, smoothed_abs,companies):
+def plotLR(df, smoothed_abs,companyName):
     # Plot time series
     fig, axes = plt.subplots(1, 2, figsize=(12, 6), sharex=True)
 
     startYear = df.index[0].strftime("%b. %Y")
     endYear = df.index[-1].strftime("%b. %Y")
 
-    fCompany = f"{', '.join(company.capitalize() for company in companies)}"
+    fCompany = f"{companyName.capitalize()}"
 
     # Plot log-returns
     top_ax = axes[0]
