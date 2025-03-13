@@ -85,8 +85,9 @@ class pySimFin:
 
         response = requests.get(url, headers=headers).json()
 
-        return pd.DataFrame(response[0]['data'], columns=response[0]['columns'])
-        #return pd.DataFrame(response)
+        df_prices = pd.DataFrame(response[0]['data'], columns=response[0]['columns'])
+
+        return df_prices
 
     
 

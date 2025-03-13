@@ -34,52 +34,65 @@ st.header(f'{companyName.title()} Share Price Analysis')
 df = psf.getStockPrices(ticker,start_date,end_date)
 df = ARCHLib.calcColumns(df)
 
-## TIME SERIES ##
-st.header("Time Series")
-fig, ax = ARCHLib.plotTS(df,companyName)
-st.pyplot(fig)
 
-## VISUALIZE LOG RETURNS ##
-st.header("Log-Returns")
-fig, ax = ARCHLib.plotLR(df, ARCHLib.smoothed_abs,companyName)
-st.pyplot(fig)
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs(["Time Series", "Log Returns", "Normal Distribution","T Distribution","GARCH","Volatility","Residual Analysis","VaR Analysis","Expected Shortfall","Dynamic Risk Modelling"])
 
-## FIT NORMAL DIST ##
-st.header("Normal Distribution")
-fig = ARCHLib.fitNormalDist(df,companyName)
-st.pyplot(fig)
+with tab1:
+    ## TIME SERIES ##
+    st.header(f"Share Price {start_date.year} - {end_date.year}")
+    fig, ax = ARCHLib.plotTS(df,companyName)
+    st.pyplot(fig)
 
-## FIT NORMAL DIST ##
-st.header("T Distribution")
-fig = ARCHLib.fitTDist(df,companyName)
-st.pyplot(fig)
+with tab2:
+    ## VISUALIZE LOG RETURNS ##
+    st.header("Log-Returns")
+    fig, ax = ARCHLib.plotLR(df, ARCHLib.smoothed_abs,companyName)
+    st.pyplot(fig)
 
-## FIT GARCHLib ##
-st.header("GARCH")
-fig, returns, garch_fit = ARCHLib.fitGARCH(df)
-st.pyplot(fig)
+with tab3:
+   ## FIT NORMAL DIST ##
+    st.header("Normal Distribution")
+    fig = ARCHLib.fitNormalDist(df,companyName)
+    st.pyplot(fig)
 
-## VISUALIZE VOLATILITY ##
-st.subheader("GARCH - Volatility")
-fig, ax = ARCHLib.visVolatility(df, returns, garch_fit)
-st.pyplot(fig)
+with tab4:
+    ## FIT T DIST ##
+    st.header("T Distribution")
+    fig = ARCHLib.fitTDist(df,companyName)
+    st.pyplot(fig)
 
-## RESIDUAL ANALYSIS ##
-st.subheader("GARCH - Residual Analysis")
-fig, ax = ARCHLib.residualAnalysis(garch_fit)
-st.pyplot(fig)
+with tab5:
+    ## FIT GARCHLib ##
+    st.header("GARCH")
+    fig, returns, garch_fit = ARCHLib.fitGARCH(df)
+    st.pyplot(fig)
 
-## VaR ANALYSIS ##
-st.subheader("Risk Modelling - VaR Analysis")
-fig, confidence_levels = ARCHLib.VaR(df)
-st.pyplot(fig)
+with tab6:
+    ## VISUALIZE VOLATILITY ##
+    st.subheader("GARCH - Volatility")
+    fig, ax = ARCHLib.visVolatility(df, returns, garch_fit)
+    st.pyplot(fig)
 
-## EXPECTED SHORTFALL ##
-st.subheader("Risk Modelling - Expected Shortfall")
-fig = ARCHLib.expectedShortfall(confidence_levels)
-st.pyplot(fig)
+with tab7:
+    ## RESIDUAL ANALYSIS ##
+    st.subheader("GARCH - Residual Analysis")
+    fig, ax = ARCHLib.residualAnalysis(garch_fit)
+    st.pyplot(fig)
 
-## DYNAMIC RISK MODELLING ##
-st.subheader("Dynamic Risk Modelling")
-fig = ARCHLib.dynamicRM(garch_fit)
-st.pyplot(fig)
+with tab8:
+    ## VaR ANALYSIS ##
+    st.subheader("Risk Modelling - VaR Analysis")
+    fig, confidence_levels = ARCHLib.VaR(df,companyName)
+    st.pyplot(fig)
+
+with tab9:
+    ## EXPECTED SHORTFALL ##
+    st.subheader("Risk Modelling - Expected Shortfall")
+    fig = ARCHLib.expectedShortfall(confidence_levels,companyName)
+    st.pyplot(fig)
+
+with tab10:
+    ## DYNAMIC RISK MODELLING ##
+    st.subheader("Dynamic Risk Modelling")
+    fig = ARCHLib.dynamicRM(garch_fit,companyName)
+    st.pyplot(fig)

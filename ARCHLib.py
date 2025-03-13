@@ -40,11 +40,11 @@ def plotTS(df,companyName):
     fig, ax = plt.subplots(figsize=(12, 6))
     startYear = df.index[0].strftime("%b. %Y")
     endYear = df.index[-1].strftime("%b. %Y")
-    fCompany = f"{companyName.capitalize()}"
+    fCompany = f"{companyName.title()}"
 
     ax.plot(df.index, df['Opening Price'], color='blue', alpha=0.6, label='Opening Price')
-    ax.set_ylabel(f"{fCompany} Share Price")
-    ax.set_title(f"{fCompany} Share Price ({startYear}-{endYear})")
+    ax.set_ylabel(f"{fCompany.title()} Share Price")
+    ax.set_title(f"{fCompany.title()} Share Price ({startYear}-{endYear})")
     ax.legend()
 
     plt.tight_layout()
@@ -59,7 +59,7 @@ def plotLR(df, smoothed_abs,companyName):
     startYear = df.index[0].strftime("%b. %Y")
     endYear = df.index[-1].strftime("%b. %Y")
 
-    fCompany = f"{companyName.capitalize()}"
+    fCompany = f"{companyName.title()}"
 
     # Plot log-returns
     top_ax = axes[0]
@@ -94,7 +94,7 @@ def fitNormalDist(df,companyName):
     stats_test, p_value = normaltest(df['Log_Return'])
     normality_result = "Normal" if p_value > 0.05 else "Not Normal"
 
-    fCompany = f"{companyName.capitalize()}"
+    fCompany = f"{companyName.title()}"
 
     # Print statistics
     print(f"Mean: {mean_return:.4f}")
@@ -132,7 +132,7 @@ def fitTDist(df,companyName):
     variance_t = (df_t / (df_t - 2)) * (scale_t ** 2) if df_t > 2 else np.nan
     kurtosis_t = (6 / (df_t - 4)) if df_t > 4 else np.inf  # Infinite for df <= 4
 
-    fCompany = f"{companyName.capitalize()}"
+    fCompany = f"{companyName.title()}"
 
     # Print fitted parameters and statistics
     print(f"Fitted t-distribution parameters:")
@@ -247,9 +247,11 @@ def residualAnalysis(garch_fit):
     return fig, axes
 
 
-def VaR(df):
+def VaR(df,companyName):
     # Prepare the data
     returns = df['Log_Return'].dropna()
+
+    fCompany = f"{companyName.title()}"
 
     # Confidence levels for VaR
     global confidence_levels
@@ -271,7 +273,7 @@ def VaR(df):
 
     plt.xlabel("Confidence Level (%)")
     plt.ylabel("Log-Returns")
-    plt.title("Bitcoin VaR Estimates Across Confidence Levels")
+    plt.title(f"{fCompany} VaR Estimates Across Confidence Levels")
     plt.legend()
     plt.grid()
     plt.show()
@@ -279,11 +281,13 @@ def VaR(df):
     return fig, confidence_levels
 
 
-def expectedShortfall(confidence_levels):
+def expectedShortfall(confidence_levels,companyName):
     # Compute Expected Shortfall (ES) using the proper formulas
     mean_return, std_return = returns.mean(), returns.std()
     phi_norm = norm.pdf(norm.ppf(confidence_levels))
     ES_norm = mean_return - std_return * (phi_norm / (1 - confidence_levels))
+
+    fCompany = f"{companyName.title()}"
 
     # Compute t-Distribution Expected Shortfall
     t_alpha = t.ppf(confidence_levels, df_t)
@@ -300,7 +304,7 @@ def expectedShortfall(confidence_levels):
     plt.plot(confidence_levels * 100, ES_t, label='t-Distribution ES', linestyle='solid', color='green')
     plt.xlabel("Confidence Level (%)")
     plt.ylabel("Log-Returns")
-    plt.title("Bitcoin Expected Shortfall (ES) Estimates Across Confidence Levels")
+    plt.title(f"{fCompany} Expected Shortfall (ES) Estimates Across Confidence Levels")
     plt.legend()
     plt.grid()
     plt.show()
@@ -308,7 +312,7 @@ def expectedShortfall(confidence_levels):
     return fig
 
 
-def dynamicRM(garch_fit):
+def dynamicRM(garch_fit,companyName):
     # Extract conditional volatility and standardized residuals
     std_residuals = garch_fit.resid / garch_fit.conditional_volatility
     std_residuals = std_residuals.dropna()
@@ -316,6 +320,8 @@ def dynamicRM(garch_fit):
 
     # Fit t-distribution to standardized residuals
     df_t, loc_t, scale_t = t.fit(std_residuals)
+
+    fCompany = f"{companyName.title()}"
 
     # Compute dynamic VaR at 95% and 99%
     VaR_95 = -scale_t * t.ppf(0.05, df_t) * cond_volatility
@@ -329,7 +335,7 @@ def dynamicRM(garch_fit):
 
     plt.xlabel("Date")
     plt.ylabel("Log-Returns")
-    plt.title("Bitcoin Negative Log-Returns with Dynamic VaR Estimates")
+    plt.title(f"{fCompany} Negative Log-Returns with Dynamic VaR Estimates")
     plt.legend()
     plt.grid()
     plt.show()
