@@ -27,8 +27,11 @@ except (ValueError,TypeError,NameError):
     pass 
 
 
-## HEADER ##
-st.header(f'{companyName.title()} Share Price Analysis')
+## Title ##
+st.markdown(
+    f"<h1 style='font-size: 55px; text-align: center; color: blue;'>{companyName.title()} Share Price Analysis</h1>", 
+    unsafe_allow_html=True
+)
 
 ## GET DATA ##
 df = psf.getStockPrices(ticker,start_date,end_date)
@@ -39,7 +42,6 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10 = st.tabs(["Time Ser
 
 with tab1:
     ## TIME SERIES ##
-    st.header(f"Share Price {start_date.year} - {end_date.year}")
     fig, ax = ARCHLib.plotTS(df,companyName)
     st.pyplot(fig)
 
