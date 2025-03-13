@@ -1,3 +1,4 @@
+!pip install seaborn
 from pySimFinLib import pySimFin
 import matplotlib.pyplot as plt
 import yfinance as yf
