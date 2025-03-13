@@ -1,4 +1,3 @@
-!pip install seaborn
 import pandas as pd
 import seaborn as sns
 import simfin as sf
