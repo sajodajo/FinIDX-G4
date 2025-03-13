@@ -5,3 +5,4 @@ simfin
 matplotlib
 statsmodels
 arch
+dotenv
