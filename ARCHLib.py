@@ -14,7 +14,12 @@ import matplotlib.dates as mdates
 
 
 def calcColumns(df):
-    df['Log_Return'] = (np.log(df['Close'] / df['Close'].shift(1))*100)
+    df['Date'] = pd.to_datetime(df['Date'])
+    df.set_index('Date', inplace=True)
+
+    df.drop(columns='Dividend Paid', inplace=True)
+
+    df['Log_Return'] = (np.log(df['Opening Price'] / df['Opening Price'].shift(1))*100)
     df.dropna(inplace=True)
 
     # Compute absolute log-returns
@@ -37,10 +42,13 @@ def plotTS(df,companyName):
     endYear = df.index[-1].strftime("%b. %Y")
     fCompany = f"{companyName.capitalize()}"
 
-    ax.plot(df.index, df['Close'], color='blue', alpha=0.6, label='Close Price')
+    ax.plot(df.index, df['Opening Price'], color='blue', alpha=0.6, label='Opening Price')
     ax.set_ylabel(f"{fCompany} Share Price")
     ax.set_title(f"{fCompany} Share Price ({startYear}-{endYear})")
     ax.legend()
+
+    plt.tight_layout()
+    plt.show()
 
     return fig, ax
 
@@ -75,7 +83,7 @@ def plotLR(df, smoothed_abs,companyName):
 
     return fig, axes
 
-def fitNormalDist(df,companies):
+def fitNormalDist(df,companyName):
     # Compute statistics
     mean_return = np.mean(df['Log_Return'])
     variance_return = np.var(df['Log_Return'])
@@ -86,7 +94,7 @@ def fitNormalDist(df,companies):
     stats_test, p_value = normaltest(df['Log_Return'])
     normality_result = "Normal" if p_value > 0.05 else "Not Normal"
 
-    fCompany = f"{', '.join(company.capitalize() for company in companies)}"
+    fCompany = f"{companyName.capitalize()}"
 
     # Print statistics
     print(f"Mean: {mean_return:.4f}")
@@ -113,7 +121,7 @@ def fitNormalDist(df,companies):
 
     return fig
 
-def fitTDist(df,companies):
+def fitTDist(df,companyName):
     # Fit a t-distribution to the log-returns
     params = t.fit(df['Log_Return'])  # Direct fitting
 
@@ -124,7 +132,7 @@ def fitTDist(df,companies):
     variance_t = (df_t / (df_t - 2)) * (scale_t ** 2) if df_t > 2 else np.nan
     kurtosis_t = (6 / (df_t - 4)) if df_t > 4 else np.inf  # Infinite for df <= 4
 
-    fCompany = f"{', '.join(company.capitalize() for company in companies)}"
+    fCompany = f"{companyName.capitalize()}"
 
     # Print fitted parameters and statistics
     print(f"Fitted t-distribution parameters:")
@@ -219,11 +227,11 @@ def residualAnalysis(garch_fit):
     axes[0, 0].axhline(y=0, color='black', linestyle='--', alpha=0.6)
 
     # 2. ACF of standardized residuals
-    plot_acf(std_residuals, ax=axes[0, 1], lags=40)
+    plot_acf(std_residuals, ax=axes[0, 1], lags=len(std_residuals) - 1)
     axes[0, 1].set_title("ACF of Standardized Residuals")
 
     # 3. ACF of squared standardized residuals
-    plot_acf(std_residuals**2, ax=axes[1, 0], lags=40)
+    plot_acf(std_residuals, ax=axes[0, 1], lags=len(std_residuals) - 1)
     axes[1, 0].set_title("ACF of Squared Standardized Residuals")
 
     # 4. QQ-plot with estimated t-distribution

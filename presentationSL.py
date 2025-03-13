@@ -12,34 +12,26 @@ st.set_page_config(layout = 'wide')
 
 psf = pySimFin2()
 
-'''## SIDEBAR SELECTORS ##
+## SIDEBAR SELECTORS ##
 st.sidebar.title("Filter")
 
-companydf = psf.getTickerMap()[psf.getTickerMap()['Ticker'].isin(psf.get_companies())]
-companyName = st.sidebar.selectbox("Select a company:", companydf['Name'])
-ticker = companydf.loc[companydf['Name'] == companyName, 'Ticker'].values[0]
+companydf = psf.getCompanyList()
+companyName = st.sidebar.selectbox("Select a company:", companydf['name'])
+ticker = companydf.loc[companydf['name'] == companyName, 'ticker'].values[0]
 
-
-companies = list([companyName])
 minDate = '2019-04-15'
-today1yrAgo = datetime.date.today() - datetime.timedelta(days=365)
+today1yrAgo = datetime.date.today() - datetime.timedelta(days=1)
 try:
     start_date, end_date = st.sidebar.date_input("Select a date range", [minDate, today1yrAgo],min_value=minDate,max_value=today1yrAgo)
 except (ValueError,TypeError,NameError):
-    pass '''
+    pass 
 
-companyName = 'Apple Inc'
-ticker = 'AAPL'
-start_date = '2019-04-15'
-end_date = '2021-04-15'
 
 ## HEADER ##
 st.header(f'{companyName.title()} Share Price Analysis')
 
 ## GET DATA ##
 df = psf.getStockPrices(ticker,start_date,end_date)
-df = df.droplevel(0)
-df = df.drop(columns='Dividend')
 df = ARCHLib.calcColumns(df)
 
 ## TIME SERIES ##

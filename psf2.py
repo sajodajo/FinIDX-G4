@@ -40,3 +40,23 @@ class pySimFin2:
         df_prices = pd.DataFrame(response[0]['data'], columns=response[0]['columns'])
 
         return df_prices
+    
+
+    def getCompanyList(self):
+        load_dotenv()
+        API_KEY = os.getenv('API_KEY')
+
+        url = "https://backend.simfin.com/api/v3/companies/list"
+
+        headers = {
+            "accept": "application/json",
+            "Authorization": API_KEY
+        }
+
+        response = requests.get(url, headers=headers).json()
+
+        raw = pd.DataFrame(response)
+
+        raw = raw[~raw['isin'].isna()]
+
+        return raw
