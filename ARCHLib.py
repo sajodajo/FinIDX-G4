@@ -231,7 +231,7 @@ def residualAnalysis(garch_fit):
     axes[0, 1].set_title("ACF of Standardized Residuals")
 
     # 3. ACF of squared standardized residuals
-    plot_acf(std_residuals, ax=axes[0, 1], lags=len(std_residuals) - 1)
+    plot_acf(std_residuals, ax=axes[1, 0], lags=len(std_residuals) - 1)
     axes[1, 0].set_title("ACF of Squared Standardized Residuals")
 
     # 4. QQ-plot with estimated t-distribution
