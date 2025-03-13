@@ -29,7 +29,7 @@ except (ValueError,TypeError,NameError):
 
 ## Title ##
 st.markdown(
-    f"<h1 style='font-size: 55px; text-align: center; color: blue;'>{companyName.title()} Share Price Analysis</h1>", 
+    f"<h1 style='font-size: 55px; text-align: center; color: #389cfc;'>{companyName.title()} Share Price Analysis</h1>", 
     unsafe_allow_html=True
 )
 
