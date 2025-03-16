@@ -11,6 +11,7 @@ import seaborn as sns
 from statsmodels.graphics.tsaplots import plot_acf
 from scipy.stats import t, probplot
 import matplotlib.dates as mdates
+from statsmodels.tsa.stattools import adfuller
 
 
 def calcColumns(df):
@@ -65,7 +66,7 @@ def plotLR(df, smoothed_abs,companyName):
     top_ax = axes[0]
     top_ax.plot(df.index, df['Log_Return'], color='#389cfc', alpha=0.6, label='Log-Returns')
     top_ax.set_ylabel("Log-Returns (%)")
-    top_ax.set_title(f"{fCompany} Log-Returns ({startYear}-{endYear})")
+    top_ax.set_title(f"{fCompany}\nLog-Returns ({startYear}-{endYear})")
     top_ax.legend()
 
     # Plot absolute log-returns with LOESS and rolling std
@@ -74,8 +75,8 @@ def plotLR(df, smoothed_abs,companyName):
     bottom_ax.xaxis.set_major_formatter(mdates.DateFormatter("%m-%y"))  
     bottom_ax.plot(df.index, df['Rolling_Std'], color='#389cfc', label='60-Day Rolling Std')
     bottom_ax.plot(df.index, smoothed_abs[:, 1], color='black', label='LOESS Smoothed Abs Returns')
-    bottom_ax.set_ylabel(f"{fCompany} Absolute Log-Returns (%)")
-    bottom_ax.set_title(f"{fCompany} Absolute Log-Returns with LOESS and Rolling Std (2019-2024)")
+    bottom_ax.set_ylabel(f"{fCompany}\nAbsolute Log-Returns (%)")
+    bottom_ax.set_title(f"{fCompany}\nAbsolute Log-Returns with LOESS and Rolling Std\n({startYear}-{endYear})")
     bottom_ax.legend()
 
     #plt.tight_layout()
@@ -96,12 +97,7 @@ def fitNormalDist(df,companyName):
 
     fCompany = f"{companyName.title()}"
 
-    # Print statistics
-    print(f"Mean: {mean_return:.4f}")
-    print(f"Variance: {variance_return:.4f}")
-    print(f"Skewness: {skewness_return:.4f}")
-    print(f"Kurtosis: {kurtosis_return:.4f}")
-    print(f"Normality Test p-value: {p_value:.4f} ({normality_result})")
+    statsDict = {"Mean": f"{mean_return:.4f}","Variance": f"{variance_return:.4f}","Skewness": f"{skewness_return:.4f}","Kurtosis": f"{kurtosis_return:.4f}", "Normality Test p-value": f"{p_value:.4f} ({normality_result})"}
 
     # Plot histogram with overlaid normal distribution
     fig = plt.figure(figsize=(10, 5))
@@ -119,13 +115,46 @@ def fitNormalDist(df,companyName):
     plt.grid()
     plt.show()
 
-    return fig
+    return fig, statsDict
+
+
+
+def adf_test(df, signif=0.05):
+    series = df['Opening Price']
+    result = adfuller(series.dropna(), autolag='AIC')
+    
+    test_statistic, p_value, used_lags, n_obs, critical_values, ic_best = result
+
+    print("Augmented Dickey-Fuller Test Results")
+    print(f"Test Statistic: {test_statistic:.4f}")
+    print(f"p-value: {p_value:.4f}")
+    print(f"Used Lags: {used_lags}")
+    print(f"Number of Observations: {n_obs}")
+    print("Critical Values:")
+    for key, value in critical_values.items():
+        print(f"   {key}: {value:.4f}")
+
+    if p_value < signif:
+        print("\n✅ The time series is stationary (Reject H0)")
+    else:
+        print("\n❌ The time series is NOT stationary (Fail to reject H0)")
+
+    return {
+        "Test Statistic": test_statistic,
+        "p-value": p_value,
+        "Used Lags": used_lags,
+        "Number of Observations": n_obs,
+        "Critical Values": critical_values,
+        "Stationary": p_value < signif
+    }
+
 
 def fitTDist(df,companyName):
     # Fit a t-distribution to the log-returns
     params = t.fit(df['Log_Return'])  # Direct fitting
 
     # Extract fitted parameters
+    global df_t, loc_t, scale_t
     df_t, loc_t, scale_t = params
 
     # Compute variance and kurtosis of the fitted t-distribution
@@ -142,6 +171,10 @@ def fitTDist(df,companyName):
     variance = print(f"Variance: {variance_t:.4f}")
     kurtosis = print(f"Kurtosis: {'Infinite' if np.isinf(kurtosis_t) else f'{kurtosis_t:.4f}'}")
 
+    return fittdpam, dof, loc, scale, variance, kurtosis
+
+def plotFitTDist(df,companyName):
+
     # Plot histogram with normal and t-distribution curves
     fig = plt.figure(figsize=(10, 5))
     count, bins, _ = plt.hist(df['Log_Return'], bins=50, alpha=0.7, color='#389cfc', edgecolor='black', density=True)
@@ -150,6 +183,9 @@ def fitTDist(df,companyName):
     x = np.linspace(bins[0], bins[-1], 100)
     pdf_norm = norm.pdf(x, np.mean(df['Log_Return']), np.std(df['Log_Return']))
     pdf_t = t.pdf(x, df_t, loc=loc_t, scale=scale_t)
+
+    fCompany = f"{companyName.title()}"
+
 
     plt.plot(x, pdf_norm, color='red', lw=2, label=f'Normal Dist (μ={np.mean(df["Log_Return"]):.2f}, σ²={np.var(df["Log_Return"]):.2f})')
     plt.plot(x, pdf_t, color='green', lw=2, label=f't-Dist (df={df_t:.2f}, scale={scale_t:.2f})')
@@ -161,7 +197,7 @@ def fitTDist(df,companyName):
     plt.grid()
     plt.show()
 
-    return fig, fittdpam, dof, loc, scale, variance, kurtosis
+    return fig
 
 '''def fitGARCH(df):
     # Prepare the data
