@@ -1,16 +1,15 @@
 import streamlit as st
 import datetime
-import ARCHLib
+import modellingLIB
 import numpy as np
 import arch
 import pandas as pd
-from psf2 import pySimFin2
+from pySimFinLIB import pySimFin
 
 
 st.set_page_config(layout = 'wide')
 
-
-psf = pySimFin2()
+psf = pySimFin()
 
 ## SIDEBAR SELECTORS ##
 st.sidebar.title("Filter")
@@ -53,7 +52,7 @@ The data is obtained from SimFin’s open financial database, which compiles fin
 
 col1, col2, col3 = st.columns([1, 4, 1])  
 with col2:
-    st.image("projectFlow.png", width=1200)
+    st.image("Media/projectFlow.png", width=1200)
 
 
 info = psf.getCompanyInfo(ticker)['companyDescription'].values[0]
@@ -67,7 +66,7 @@ st.markdown(f'''
 
 ## GET DATA ##
 df = psf.getStockPrices(ticker,start_date,end_date)
-df = ARCHLib.calcColumns(df)
+df = modellingLIB.calcColumns(df)
 
 returns = df['Log_Return'].dropna()
 
@@ -88,7 +87,7 @@ API call for financial data
 
 col1, col2, col3 = st.columns([3, 1, 1])  
 with col1:
-    st.image("EDAsnap1.png", width=1200)
+    st.image("Media/EDAsnap1.png", width=1200)
 
 
 st.markdown(
@@ -100,17 +99,17 @@ tab1, tab2, tab3, tab4, tab5 = st.tabs(["Time Series", "Log Returns", "Summary S
 
 with tab1:
     ## TIME SERIES ##
-    fig, ax = ARCHLib.plotTS(df,companyName)
+    fig, ax = modellingLIB.plotTS(df,companyName)
     st.pyplot(fig)
 
 with tab2:
     ## VISUALIZE LOG RETURNS ##
     st.header("Log-Returns")
-    fig, ax = ARCHLib.plotLR(df, ARCHLib.smoothed_abs,companyName)
+    fig, ax = modellingLIB.plotLR(df, modellingLIB.smoothed_abs,companyName)
     st.pyplot(fig)
 
 with tab3:
-    results_df, interpretation = ARCHLib.adf_test_summary(df)
+    results_df, interpretation = modellingLIB.adf_test_summary(df)
 
     st.write("## 📊 ADF Test Results (Log Returns)")
     st.dataframe(results_df)
@@ -120,10 +119,10 @@ with tab3:
 
 with tab4:
     st.header("Autocorrelation Checks") 
-    fig, ax = ARCHLib.autocorrChecks(df)
+    fig, ax = modellingLIB.autocorrChecks(df)
     st.pyplot(fig)
 
-    lbResults, lbIntepretation = ARCHLib.ljung_box_test_with_interpretation(df['Log_Return'])
+    lbResults, lbIntepretation = modellingLIB.ljung_box_test_with_interpretation(df['Log_Return'])
 
     st.write("## 📊 Ljung-Box Test Results (Log Returns)")
     st.dataframe(lbResults)
@@ -137,7 +136,7 @@ with tab4:
 with tab5:
     ## FIT T DIST ##
     st.header("T Distribution")
-    fig, statsDict = ARCHLib.fitTDist(df,companyName)
+    fig, statsDict = modellingLIB.fitTDist(df,companyName)
     st.pyplot(fig)
     st.dataframe(statsDict)
 
@@ -155,42 +154,42 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs(['ARCH', 'GARCH', 'GJR-
 
 with tab1:
     st.subheader("ARCH Model Results")
-    resultARCH, bicARCH, aicARCH, llARCH = ARCHLib.fit_arch_model(returns)
+    resultARCH, bicARCH, aicARCH, llARCH = modellingLIB.fit_arch_model(returns)
     st.write(resultARCH.summary())
 
 with tab2:
     st.subheader("GARCH Model Results")
-    resultGARCH, bicGARCH, aicGARCH, llGARCH = ARCHLib.fit_garch_model(returns)
+    resultGARCH, bicGARCH, aicGARCH, llGARCH = modellingLIB.fit_garch_model(returns)
     st.write(resultGARCH.summary())
 
 with tab3:
     st.subheader("GJR-GARCH Model Results")
-    resultGJRGARCH, bicGJRGARCH, aicGJRGARCH, llGJRGARCH = ARCHLib.fit_gjr_garch_model(returns)
+    resultGJRGARCH, bicGJRGARCH, aicGJRGARCH, llGJRGARCH = modellingLIB.fit_gjr_garch_model(returns)
     st.write(resultGJRGARCH.summary())
 
 with tab4:
     st.subheader("EGARCH Model Results")
-    resultEGARCH, bicEGARCH, aicEGARCH, llEGARCH = ARCHLib.fit_egarch_model(returns)
+    resultEGARCH, bicEGARCH, aicEGARCH, llEGARCH = modellingLIB.fit_egarch_model(returns)
     st.write(resultEGARCH.summary())
 
 with tab5:
     st.subheader("ARCH-t Model Results")
-    resultARCHt, bicARCHt, aicARCHt, llARCHt = ARCHLib.fit_arch_t_model(returns)
+    resultARCHt, bicARCHt, aicARCHt, llARCHt = modellingLIB.fit_arch_t_model(returns)
     st.write(resultARCHt.summary())
 
 with tab6:
     st.subheader("GARCH-t Model Results")
-    resultGARCHt, bicGARCHt, aicGARCHt, llGARCHt = ARCHLib.fit_garch_t_model(returns)
+    resultGARCHt, bicGARCHt, aicGARCHt, llGARCHt = modellingLIB.fit_garch_t_model(returns)
     st.write(resultGARCHt.summary())
 
 with tab7:
     st.subheader("GJR-GARCH-t Model Results")
-    resultGJRGARCHt, bicGJRGARCHt, aicGJRGARCHt, llGJRGARCHt = ARCHLib.fit_gjr_garch_t_model(returns)
+    resultGJRGARCHt, bicGJRGARCHt, aicGJRGARCHt, llGJRGARCHt = modellingLIB.fit_gjr_garch_t_model(returns)
     st.write(resultGJRGARCHt.summary())
 
 with tab8:
     st.subheader("EGARCH-t Model Results")
-    resultEGARCHt, bicEGARCHt, aicEGARCHt, llEGARCHt = ARCHLib.fit_egarch_t_model(returns)
+    resultEGARCHt, bicEGARCHt, aicEGARCHt, llEGARCHt = modellingLIB.fit_egarch_t_model(returns)
     st.write(resultEGARCHt.summary())
 
 
@@ -215,7 +214,7 @@ lowestAIC = comparison_df["AIC"].idxmin()
 lowestBIC = comparison_df["BIC"].idxmin()
 highestLL = comparison_df["Log-Likelihood"].idxmax()
 
-message, best_model = ARCHLib.modelChoice(comparison_df)
+message, best_model = modellingLIB.modelChoice(comparison_df)
 
 st.markdown(f'''
 <p style='font-size:20px; text-align:left; color:green'>
@@ -249,41 +248,41 @@ with tab1:
     col1, col2, col3 = st.columns([1, 3, 1])  
     with col2:
         st.subheader(f"{best_model} - Residuals vs. Conditional Volatility")
-        st.pyplot(ARCHLib.vizBestModel(df,bestResult))
+        st.pyplot(modellingLIB.vizBestModel(df,bestResult))
 
 with tab2:
     col1, col2, col3 = st.columns([1, 3, 1])  
     with col2:    
         st.subheader(f"{best_model} - Volatility")
-        fig, ax = ARCHLib.visVolatility(df, returns, bestResult)
+        fig, ax = modellingLIB.visVolatility(df, returns, bestResult)
         st.pyplot(fig)
 
 with tab3:
     col1, col2, col3 = st.columns([1, 3, 1])  
     with col2:
         st.subheader(f"{best_model} - Residual Analysis")
-        fig, ax = ARCHLib.residualAnalysis(bestResult)
+        fig, ax = modellingLIB.residualAnalysis(bestResult)
         st.pyplot(fig)
 
 with tab4:
     col1, col2, col3 = st.columns([1, 3, 1])  
     with col2:
         st.subheader(f"{best_model} -  VaR Analysis")
-        fig, confidence_levels = ARCHLib.VaR(returns,companyName)
+        fig, confidence_levels = modellingLIB.VaR(returns,companyName)
         st.pyplot(fig)
 
 with tab5:
     col1, col2, col3 = st.columns([1, 3, 1])  
     with col2:
         st.subheader(f"{best_model} - Expected Shortfall")
-        fig = ARCHLib.expectedShortfall(confidence_levels,companyName,returns)
+        fig = modellingLIB.expectedShortfall(confidence_levels,companyName,returns)
         st.pyplot(fig)
 
 with tab6:
     col1, col2, col3 = st.columns([1, 3, 1])  
     with col2:
         st.subheader(f"{best_model} - Dynamic Risk Modelling")
-        fig = ARCHLib.dynamicRM(bestResult,companyName,returns)
+        fig = modellingLIB.dynamicRM(bestResult,companyName,returns)
         st.pyplot(fig)
 
 
