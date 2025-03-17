@@ -28,12 +28,12 @@ except (ValueError,TypeError,NameError):
 
 ## Title ##
 st.markdown(
-    f"<h1 style='font-size: 60px; text-align: left; color: #389cfc;'>{companyName.title()} Share Price Analysis</h1>", 
+    f"<h1 style='font-size: 55px; text-align: left; color: #389cfc;'>{companyName.title()} Stock Price Analysis</h1>", 
     unsafe_allow_html=True
 )
 
 st.markdown(
-    f"<h2 style='font-size: 45px; text-align: left; color:black'> 1. About the Dataset </h2>", 
+    f"<h2 style='font-size: 45px; text-align: left; color:black'> 1. About the Data </h2>", 
     unsafe_allow_html=True
 )
 
@@ -54,15 +54,16 @@ col1, col2, col3 = st.columns([1, 4, 1])
 with col2:
     st.image("Media/projectFlow.png", width=1200)
 
+st.markdown('''
+<p style='font-size:18px; text-align:justify; color:black'>
+2 custom libraries were created for this, one for the SimFin API and the other for the modelling functions. The SimFin library is used to retrieve the company list and financial data, while the modelling library contains the functions for data cleaning, exploratory data analysis, and volatility modelling.<br><br>
+</p>
+''', unsafe_allow_html=True)
+
 
 info = psf.getCompanyInfo(ticker)['companyDescription'].values[0]
 industry = psf.getCompanyInfo(ticker)['industryName'].values[0]
 
-st.markdown(f'''
-<p style='font-size:20px; text-align:left; color:green'>
-<br><b>The company selected is {companydf.loc[companydf["name"] == companyName, "name"].values[0]} with the ticker '{ticker}'. {info} The company is in the {industry} industry. The data is from {start_date} to {end_date}.</b>
-</p>
-''', unsafe_allow_html=True)
 
 ## GET DATA ##
 df = psf.getStockPrices(ticker,start_date,end_date)
@@ -89,11 +90,26 @@ col1, col2, col3 = st.columns([3, 1, 1])
 with col1:
     st.image("Media/EDAsnap1.png", width=1200)
 
+st.markdown('''
+<p style='font-size:18px; text-align:left; color:black'>
+Addition of new calculated columns
+</p>''', unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns([3, 1, 1])  
+with col1:
+    st.image("Media/newColumns.png", width=1200)
+
 
 st.markdown(
     f"<h3 style='font-size: 35px; text-align: left; color:grey'> 2.2. Data Overview </h2>", 
     unsafe_allow_html=True
 )
+
+st.markdown(f'''
+<p style='font-size:20px; text-align:left; color:green'>
+<b>The company selected is {companydf.loc[companydf["name"] == companyName, "name"].values[0]} with the ticker '{ticker}'. {info} The company is in the {industry} industry. The data is from {start_date} to {end_date}.</b>
+</p>
+''', unsafe_allow_html=True)
 
 tab1, tab2, tab3, tab4, tab5 = st.tabs(["Time Series", "Log Returns", "Summary Statistics & Stationarity","Autocorrelation","T Distribution"])
 
@@ -138,7 +154,6 @@ with tab5:
     st.header("T Distribution")
     fig, statsDict = modellingLIB.fitTDist(df,companyName)
     st.pyplot(fig)
-    st.dataframe(statsDict)
 
 st.markdown(
     f"<br><br><h2 style='font-size: 45px; text-align: left; color:black'> 3. Volatility Modelling </h2>", 
