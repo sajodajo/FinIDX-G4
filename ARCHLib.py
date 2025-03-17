@@ -12,6 +12,9 @@ from statsmodels.graphics.tsaplots import plot_acf
 from scipy.stats import t, probplot
 import matplotlib.dates as mdates
 from statsmodels.tsa.stattools import adfuller
+from statsmodels.stats.diagnostic import acorr_ljungbox
+import streamlit as st
+
 
 
 def calcColumns(df):
@@ -167,92 +170,54 @@ def fitTDist(df,companyName):
     return fig, statsDict
 
 
-def adf_test(df, signif=0.05):
-    series = df['Opening Price']
-    result = adfuller(series.dropna(), autolag='AIC')
-    
-    test_statistic, p_value, used_lags, n_obs, critical_values, ic_best = result
-
-    print("Augmented Dickey-Fuller Test Results")
-    print(f"Test Statistic: {test_statistic:.4f}")
-    print(f"p-value: {p_value:.4f}")
-    print(f"Used Lags: {used_lags}")
-    print(f"Number of Observations: {n_obs}")
-    print("Critical Values:")
-    for key, value in critical_values.items():
-        print(f"   {key}: {value:.4f}")
-
-    if p_value < signif:
-        print("\n✅ The time series is stationary (Reject H0)")
-    else:
-        print("\n❌ The time series is NOT stationary (Fail to reject H0)")
-
-    return {
-        "Test Statistic": test_statistic,
-        "p-value": p_value,
-        "Used Lags": used_lags,
-        "Number of Observations": n_obs,
-        "Critical Values": critical_values,
-        "Stationary": p_value < signif
-    }
-'''def fitGARCH(df):
-    # Prepare the data
-    global returns
-    returns = df['Log_Return'].dropna()
-
-    # Fit GARCH(1,1) model with t-distributed errors
-    garch_model = arch_model(returns, mean = 'AR', lags= 1, vol='Garch', p=1, o=0, q=1, dist='t')
-    global garch_fit
-    garch_fit = garch_model.fit(disp='off')
-    print("\nModel Summary:")
-    print(garch_fit.summary())
-
-    # Plot GJR-GARCH model results
-    fig = garch_fit.plot()
-
-    return fig, returns, garch_fit'''
-
 def autocorrChecks(df):
+    nlags = int(len(df) ** (1/2))
     # Compute autocorrelation of log-returns
-    acf = sm.tsa.acf(df['Log_Return'], nlags=20, fft=False)
-    pacf = sm.tsa.pacf(df['Log_Return'], nlags=20)
+    acf = sm.tsa.acf(df['Log_Return'], nlags=nlags, fft=False)
+    pacf = sm.tsa.pacf(df['Log_Return'], nlags=nlags)
 
     # Plot ACF and PACF
     fig, axes = plt.subplots(1, 2, figsize=(12, 6))
 
     # Plot ACF
-    sm.graphics.tsa.plot_acf(df['Log_Return'], lags=20, ax=axes[0])
+    sm.graphics.tsa.plot_acf(df['Log_Return'], lags=nlags, ax=axes[0])
     axes[0].set_title("Autocorrelation Function (ACF)")
 
     # Plot PACF
-    sm.graphics.tsa.plot_pacf(df['Log_Return'], lags=20, ax=axes[1])
+    sm.graphics.tsa.plot_pacf(df['Log_Return'], lags=nlags, ax=axes[1])
     axes[1].set_title("Partial Autocorrelation Function (PACF)")
 
     return fig, axes
 
 
+def ljungboxTest(time_series):
+    numLags = len(time_series) ** (1/2)
+    ljung_box_test = acorr_ljungbox(time_series, lags=[numLags], return_df=True)
+    return ljung_box_test
 
-def fitGARCH(df):
-    # Prepare the data
-    global returns
-    returns = df['Log_Return'].dropna()
 
-    # Fit GARCH(1,1) model with t-distributed errors
-    garch_model = arch_model(returns, mean='AR', lags=1, vol='Garch', p=1, o=0, q=1, dist='t')
-    global garch_fit
-    garch_fit = garch_model.fit(disp='off')
-    print("\nModel Summary:")
-    print(garch_fit.summary())
+def ljung_box_test_with_interpretation(time_series, max_lags=None):
+    if max_lags is None:
+        max_lags = int(len(time_series) ** 0.5)
+    
+    test_results = acorr_ljungbox(time_series, lags=[max_lags], return_df=True)
+    
+    lb_stat = test_results["lb_stat"].values[0]
+    lb_pvalue = test_results["lb_pvalue"].values[0]
 
-    # Plot GARCH model results
-    fig = garch_fit.plot()
+    if lb_pvalue < 0.05:
+        interpretation = (f"The Ljung-Box test suggests significant autocorrelation up to {max_lags} lags "
+                          f"(lb_stat = {lb_stat:.4f}, p-value = {lb_pvalue:.4f}). "
+                          "This indicates that past values influence future values.")
+    else:
+        interpretation = (f"The Ljung-Box test does not detect significant autocorrelation up to {max_lags} lags "
+                          f"(lb_stat = {lb_stat:.4f}, p-value = {lb_pvalue:.4f}). "
+                          "The series may be behaving like white noise.")
 
-    # Customize line colors
-    ax = fig.axes[0]  # Access the main plot axis
-    for line in ax.get_lines():
-        line.set_color('#389cfc')  # Change all lines to red
+    return test_results, interpretation
 
-    return fig, returns, garch_fit
+
+
 
 
 def visVolatility(df,returns, garch_fit):
@@ -321,10 +286,8 @@ def residualAnalysis(garch_fit):
     return fig, axes
 
 
-def VaR(df,companyName):
-    # Prepare the data
-    returns = df['Log_Return'].dropna()
-
+def VaR(returns,companyName):
+  
     fCompany = f"{companyName.title()}"
 
     # Confidence levels for VaR
@@ -355,7 +318,7 @@ def VaR(df,companyName):
     return fig, confidence_levels
 
 
-def expectedShortfall(confidence_levels,companyName):
+def expectedShortfall(confidence_levels,companyName,returns):
     # Compute Expected Shortfall (ES) using the proper formulas
     mean_return, std_return = returns.mean(), returns.std()
     phi_norm = norm.pdf(norm.ppf(confidence_levels))
@@ -386,7 +349,7 @@ def expectedShortfall(confidence_levels,companyName):
     return fig
 
 
-def dynamicRM(garch_fit,companyName):
+def dynamicRM(garch_fit,companyName,returns):
     # Extract conditional volatility and standardized residuals
     std_residuals = garch_fit.resid / garch_fit.conditional_volatility
     std_residuals = std_residuals.dropna()
@@ -415,3 +378,199 @@ def dynamicRM(garch_fit,companyName):
     plt.show()
 
     return fig
+
+def adf_test_summary(df, column='Log_Return', signif=0.05):
+    """Performs ADF test and returns results as a DataFrame and interpretation text."""
+    series = df[column].dropna()
+    result = adfuller(series, maxlag=0, autolag=None)
+    
+    test_statistic, p_value, used_lags, n_obs, critical_values = result
+    is_stationary = p_value < signif
+
+    # Create a results DataFrame
+    adf_results = pd.DataFrame({
+        "Test Statistic": [test_statistic],
+        "p-value": [p_value],
+        "Used Lags": [used_lags],
+        "Number of Observations": [n_obs],
+        "Stationary": [is_stationary]
+    })
+    
+    for key, value in critical_values.items():
+        adf_results[f"Critical Value ({key})"] = [value]
+
+    # Interpretation text
+    interpretation = ""
+    if p_value < 0.01:
+        interpretation += "✅ The series is **STATIONARY** at the **1% significance level** (Strong rejection of H0).\n"
+    elif p_value < 0.05:
+        interpretation += "✅ The series is **STATIONARY** at the **5% significance level** (Moderate rejection of H0).\n"
+    elif p_value < 0.10:
+        interpretation += "⚠️ The series is **WEAKLY STATIONARY** at the **10% significance level** (Weak rejection of H0).\n"
+    else:
+        interpretation += "❌ The series is **NON-STATIONARY** (Fail to reject H0).\n"
+
+    for level, value in critical_values.items():
+        if test_statistic < value:
+            interpretation += f"\n✔️ Test Statistic is below the **{level}** critical value ({value:.4f}). The series is **STATIONARY** at {level} level.\n"
+        else:
+            interpretation += f"\n❌ Test Statistic is above the **{level}** critical value ({value:.4f}). The series is **NOT stationary** at {level} level.\n"
+
+    return adf_results, interpretation
+
+
+### MODELS ###
+
+## ARCH Model
+def fit_arch_model(returns):
+    model = arch_model(returns, vol="ARCH", p=1)
+    resultARCH = model.fit(disp="off")
+    bicARCH = resultARCH.bic
+    aicARCH = resultARCH.aic
+    llARCH = resultARCH.loglikelihood
+    return resultARCH, bicARCH, aicARCH, llARCH
+
+## GARCH Model
+def fit_garch_model(returns):
+    model = arch_model(returns, vol="GARCH", p=1, q=1)
+    resultGARCH = model.fit(disp="off")
+    bicGARCH = resultGARCH.bic
+    aicGARCH = resultGARCH.aic
+    llGARCH = resultGARCH.loglikelihood
+    return resultGARCH, bicGARCH, aicGARCH, llGARCH
+
+## GJR-GARCH Model
+def fit_gjr_garch_model(returns):
+    model = arch_model(returns, vol="GARCH", p=1, q=1, o=1)
+    resultGJRGARCH = model.fit(disp="off")
+    bicGJRGARCH = resultGJRGARCH.bic
+    aicGJRGARCH = resultGJRGARCH.aic
+    llGJRGARCH = resultGJRGARCH.loglikelihood
+    return resultGJRGARCH, bicGJRGARCH, aicGJRGARCH, llGJRGARCH
+
+## EGARCH Model
+def fit_egarch_model(returns):
+    model = arch_model(returns, vol="EGARCH", p=1, q=1)
+    resultEGARCH = model.fit(disp="off")
+    bicEGARCH = resultEGARCH.bic
+    aicEGARCH = resultEGARCH.aic
+    llEGARCH = resultEGARCH.loglikelihood
+    return resultEGARCH, bicEGARCH, aicEGARCH, llEGARCH
+
+## ARCH-t Model
+def fit_arch_t_model(returns):
+    model = arch_model(returns, vol="ARCH", p=1,dist='t')
+    resultARCHt = model.fit(disp="off")
+    bicARCHt = resultARCHt.bic
+    aicARCHt = resultARCHt.aic
+    llARCHt = resultARCHt.loglikelihood
+    return resultARCHt, bicARCHt, aicARCHt, llARCHt
+
+
+## GARCH-t Model
+def fit_garch_t_model(returns):
+    model = arch_model(returns, vol="GARCH", p=1, q=1,dist='t')
+    resultGARCHt = model.fit(disp="off")
+    bicGARCHt = resultGARCHt.bic
+    aicGARCHt = resultGARCHt.aic
+    llGARCHt = resultGARCHt.loglikelihood
+    return resultGARCHt, bicGARCHt, aicGARCHt, llGARCHt
+
+## GJR-GARCH-t Model
+def fit_gjr_garch_t_model(returns):
+    model = arch_model(returns, vol="GARCH", p=1, q=1, o=1,dist='t')
+    resultGJRGARCHt = model.fit(disp="off")
+    bicGJRGARCHt = resultGJRGARCHt.bic
+    aicGJRGARCHt = resultGJRGARCHt.aic
+    llGJRGARCHt = resultGJRGARCHt.loglikelihood
+    return resultGJRGARCHt, bicGJRGARCHt, aicGJRGARCHt, llGJRGARCHt
+
+## EGARCH-t Model
+def fit_egarch_t_model(returns):
+    model = arch_model(returns, vol="EGARCH", p=1, q=1,dist='t')
+    resultEGARCHt = model.fit(disp="off")
+    bicEGARCHt = resultEGARCHt.bic
+    aicEGARCHt = resultEGARCHt.aic
+    llEGARCHt = resultEGARCHt.loglikelihood
+    return resultEGARCHt, bicEGARCHt, aicEGARCHt, llEGARCHt
+
+
+def modelChoice(comparison_df):
+    best_models = {
+        "AIC": comparison_df["AIC"].idxmin(),  
+        "BIC": comparison_df["BIC"].idxmin(), 
+        "Log-Likelihood": comparison_df["Log-Likelihood"].idxmax() 
+    }
+
+    model_scores = comparison_df.index.to_series().apply(lambda x: sum(1 for metric in best_models.values() if metric == x))
+
+    global best_model
+    best_model = model_scores.idxmax()
+    best_count = model_scores.max()
+
+    # Highlight best models in each criterion
+    highlight_df = comparison_df.copy()
+    highlight_df["Best AIC"] = comparison_df.index == best_models["AIC"]
+    highlight_df["Best BIC"] = comparison_df.index == best_models["BIC"]
+    highlight_df["Best Log-Likelihood"] = comparison_df.index == best_models["Log-Likelihood"]
+
+    st.write("### Best Model by Each Criterion")
+    st.dataframe(highlight_df)
+
+    # Decision logic
+    if best_count == 3:
+        message = f"🏆 {best_model} is the best model as it performs best in all three criteria."
+    elif best_count == 2:
+        message = f"✅ {best_model} is the most favorable model, leading in 2 out of 3 criteria."
+    else:
+        message = "📊 No single model is the best in all criteria. Consider trade-offs:\n"
+        for metric, best in best_models.items():
+            message += f" - {metric}: {best}\n"
+
+    return message, best_model
+
+
+def vizBestModel(df,bestResult):
+    print("\nModel Summary:")
+    print(bestResult.summary())
+
+    # Plot GARCH model results
+    fig = bestResult.plot()
+
+    # Customize line colors
+    ax = fig.axes[0]  # Access the main plot axis
+    for line in ax.get_lines():
+        line.set_color('#389cfc')  # Change all lines to red
+
+    return fig
+
+
+def visVolatility(df,returns, garch_fit):
+    # Get the conditional volatility (sigma_t) and standardized residuals
+    conditional_volatility = garch_fit.conditional_volatility
+    absolute_log_returns = np.abs(returns)
+
+    # Combined plot with two subplots stacked vertically
+    fig, axs = plt.subplots(2, 1, figsize=(14, 12))
+
+    # Plot 1: Log returns with shaded ±2 conditional standard deviations
+    axs[0].plot(returns, label='Log Returns', color='#389cfc')
+    upper_bound = 2 * conditional_volatility
+    lower_bound = -2 * conditional_volatility
+    axs[0].fill_between(df.index, lower_bound, upper_bound, color='red', alpha=0.2, label='±2 Conditional Std Dev')
+    axs[0].set_title('Log Returns with Conditional Std Deviations (Shaded ±2σ)')
+    axs[0].set_xlabel('Time')
+    axs[0].set_ylabel('Log Returns / Volatility')
+    axs[0].legend()
+    axs[0].grid(True)
+
+    # Plot 2: Conditional Std Dev vs. Absolute Log Returns
+    axs[1].plot(absolute_log_returns, label='|Log Returns|', color='gray', alpha=0.2)
+    axs[1].plot(conditional_volatility, label='Conditional Std Dev (GARCH)', color='#389cfc')
+    axs[1].set_title('Conditional Std Dev vs Absolute Log Returns')
+    axs[1].set_xlabel('Time')
+    axs[1].set_ylabel('Values')
+    axs[1].legend()
+    axs[1].grid(True)
+
+    return fig, axs
