@@ -40,24 +40,28 @@ st.markdown(
 
 st.markdown('''
 <p style='font-size:18px; text-align:justify; color:black'>
-This project is a dashboard using to analyze the stock price of a company. The dashboard uses ARCH and GARCH models to analyze the stock price data. ARCH and GARCH models are used to model the volatility of the stock price data. The dashboard also includes a VaR analysis and Expected Shortfall analysis to model the risk of the stock price data. The dashboard is built using Streamlit and Python.
-</p>
+This project is a dashboard designed to analyze the stock price movements of a selected company. The dashboard leverages advanced econometric models, including ARCH, GARCH, GJR-GARCH, and E-GARCH, along with their t-distributed counterparts, to model and forecast stock price volatility.
+The dashboard is built using Streamlit and Python.
+            
+<p style='font-size:18px; text-align:justify; color:black'>
+The data for this project is sourced directly from the SimFin API, a financial data provider that offers standardized financial statements, market data, and derived metrics for publicly traded companies. This dataset includes stock prices for a diverse range of companies, primarily from U.S. stock markets.
 
 <p style='font-size:18px; text-align:justify; color:black'>
-The selected dataset is sourced from SimFin (Simplifying Finance), a financial data provider that offers standardized financial statements, market data, and derived metrics for publicly traded companies. The dataset includes income statements, balance sheets, cash flow statements, stock prices, and fundamental financial ratios for a wide range of companies, primarily from U.S. stock markets.
-</p>
-
-<p style='font-size:18px; text-align:justify; color:black'><b>Source:</b>
-The data is obtained from SimFin’s open financial database, which compiles financial reports from SEC filings (10-K, 10-Q reports) and other public sources. SimFin standardizes the raw financial data, ensuring consistency and ease of use for financial analysis.
+The data is obtained from SimFin’s open financial database, which compiles financial reports from SEC filings (10-K, 10-Q reports) and other public sources. SimFin standardizes the raw financial data, ensuring consistency and ease of use for financial analysis.<br><br>
 </p>
 ''', unsafe_allow_html=True)
+
+col1, col2, col3 = st.columns([1, 4, 1])  
+with col2:
+    st.image("projectFlow.png", width=1200)
+
 
 info = psf.getCompanyInfo(ticker)['companyDescription'].values[0]
 industry = psf.getCompanyInfo(ticker)['industryName'].values[0]
 
 st.markdown(f'''
 <p style='font-size:20px; text-align:left; color:green'>
-<b>The company selected is {companydf.loc[companydf["name"] == companyName, "name"].values[0]} with the ticker '{ticker}'. {info} The company is in the {industry} industry. The data is from {start_date} to {end_date}.</b>
+<br><b>The company selected is {companydf.loc[companydf["name"] == companyName, "name"].values[0]} with the ticker '{ticker}'. {info} The company is in the {industry} industry. The data is from {start_date} to {end_date}.</b>
 </p>
 ''', unsafe_allow_html=True)
 
@@ -66,7 +70,6 @@ df = psf.getStockPrices(ticker,start_date,end_date)
 df = ARCHLib.calcColumns(df)
 
 returns = df['Log_Return'].dropna()
-
 
 st.markdown(
     f"<br><h2 style='font-size: 45px; text-align: left; color:black'> 2. Exploratory Data Analysis </h2>", 
