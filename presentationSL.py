@@ -16,7 +16,7 @@ psf = pySimFin2()
 st.sidebar.title("Filter")
 
 companydf = psf.getCompanyList()
-companyName = st.sidebar.selectbox("Select a company:", companydf['name'].sort_values())
+companyName = st.sidebar.selectbox("Select a company:", companydf['name'].sort_values(),index=94)
 ticker = companydf.loc[companydf['name'] == companyName, 'ticker'].values[0]
 
 minDate = '2019-04-15'
@@ -86,11 +86,13 @@ with tab2:
     st.pyplot(fig)
 
 with tab3:
-    'Hello'
+    st.header("ADF Test of Stationarity")
     st.dataframe(ARCHLib.adf_test(df))
 
 with tab4:
-    'Hello'
+    st.header("Autocorrelation Checks") 
+    fig, ax = ARCHLib.autocorrChecks(df)
+    st.pyplot(fig)
 
 st.markdown(
     f"<br><br><h2 style='font-size: 45px; text-align: center; color:black'> 3. Volatility Modelling </h2>", 
@@ -98,12 +100,34 @@ st.markdown(
 )
 
 st.markdown(
-    f"<br><br><h2 style='font-size: 45px; text-align: center; color:black'> 4. Risk Modelling </h2>", 
+    f"<br><h3 style='font-size: 35px; text-align: center; color:black'> 3.1. Model Testing </h2>", 
+    unsafe_allow_html=True
+)
+
+tab1, tab2, tab3, tab4 = st.tabs(['ARCH', 'GARCH', 'GJR-GARCH', 'EGARCH'])
+
+with tab1:
+    'TEST'
+with tab2:
+    'TEST'
+with tab3:
+    'TEST'
+with tab4:
+    'TEST'
+
+
+st.markdown(
+    f"<br><h3 style='font-size: 35px; text-align: center; color:black'> 3.2. Model Selection </h2>", 
     unsafe_allow_html=True
 )
 
 st.markdown(
-    f"<br><br><h2 style='font-size: 45px; text-align: center; color:black'> 5. Conclusions </h2>", 
+    f"<br><h2 style='font-size: 45px; text-align: center; color:black'> 4. Risk Modelling </h2>", 
+    unsafe_allow_html=True
+)
+
+st.markdown(
+    f"<br><h2 style='font-size: 45px; text-align: center; color:black'> 5. Conclusions </h2>", 
     unsafe_allow_html=True
 )
 
@@ -123,10 +147,9 @@ with tab3:
 with tab4:
     ## FIT T DIST ##
     st.header("T Distribution")
-    ARCHLib.fitTDist(df,companyName)
-
-    fig = ARCHLib.plotFitTDist(df,companyName)
+    fig, statsDict = ARCHLib.fitTDist(df,companyName)
     st.pyplot(fig)
+    st.dataframe(statsDict)
 
 with tab5:
     ## FIT GARCHLib ##

@@ -118,6 +118,54 @@ def fitNormalDist(df,companyName):
     return fig, statsDict
 
 
+def fitTDist(df,companyName):
+    # Fit a t-distribution to the log-returns
+    params = t.fit(df['Log_Return'])  # Direct fitting
+
+    # Extract fitted parameters
+    global df_t, loc_t, scale_t
+    df_t, loc_t, scale_t = params
+
+    # Compute variance and kurtosis of the fitted t-distribution
+    variance_t = (df_t / (df_t - 2)) * (scale_t ** 2) if df_t > 2 else np.nan
+    kurtosis_t = (6 / (df_t - 4)) if df_t > 4 else np.inf  # Infinite for df <= 4
+
+    fCompany = f"{companyName.title()}"
+
+    # Print fitted parameters and statistics
+    dof = print(f"Degrees of Freedom: {df_t:.4f}")
+    loc = print(f"Location: {loc_t:.4f}")
+    scale = print(f"Scale: {scale_t:.4f}")
+    variance = print(f"Variance: {variance_t:.4f}")
+    kurtosis = print(f"Kurtosis: {'Infinite' if np.isinf(kurtosis_t) else f'{kurtosis_t:.4f}'}")
+
+
+    # Plot histogram with normal and t-distribution curves
+    fig = plt.figure(figsize=(10, 5))
+    count, bins, _ = plt.hist(df['Log_Return'], bins=50, alpha=0.7, color='#389cfc', edgecolor='black', density=True)
+
+    # Compute normal and t-distribution curves
+    x = np.linspace(bins[0], bins[-1], 100)
+    pdf_norm = norm.pdf(x, np.mean(df['Log_Return']), np.std(df['Log_Return']))
+    pdf_t = t.pdf(x, df_t, loc=loc_t, scale=scale_t)
+
+    fCompany = f"{companyName.title()}"
+
+    plt.plot(x, pdf_norm, color='red', lw=2, label=f'Normal Dist (μ={np.mean(df["Log_Return"]):.2f}, σ²={np.var(df["Log_Return"]):.2f})')
+    plt.plot(x, pdf_t, color='green', lw=2, label=f't-Dist (df={df_t:.2f}, scale={scale_t:.2f})')
+
+    plt.xlabel("Log-Returns (%)")
+    plt.ylabel("Density")
+    plt.title(f"Histogram of {fCompany} Log-Returns with Normal and t-Distributions")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    statsDict = {"Degrees of Freedom": f"{df_t:.4f}","Location": f"{loc_t:.4f}","Scale": f"{scale_t:.4f}","Variance": f"{variance_t:.4f}","Kurtosis": f"{'Infinite' if np.isinf(kurtosis_t) else f'{kurtosis_t:.4f}'}"}
+
+
+    return fig, statsDict
+
 
 def adf_test(df, signif=0.05):
     series = df['Opening Price']
@@ -147,58 +195,6 @@ def adf_test(df, signif=0.05):
         "Critical Values": critical_values,
         "Stationary": p_value < signif
     }
-
-
-def fitTDist(df,companyName):
-    # Fit a t-distribution to the log-returns
-    params = t.fit(df['Log_Return'])  # Direct fitting
-
-    # Extract fitted parameters
-    global df_t, loc_t, scale_t
-    df_t, loc_t, scale_t = params
-
-    # Compute variance and kurtosis of the fitted t-distribution
-    variance_t = (df_t / (df_t - 2)) * (scale_t ** 2) if df_t > 2 else np.nan
-    kurtosis_t = (6 / (df_t - 4)) if df_t > 4 else np.inf  # Infinite for df <= 4
-
-    fCompany = f"{companyName.title()}"
-
-    # Print fitted parameters and statistics
-    fittdpam = print(f"Fitted t-distribution parameters:")
-    dof = print(f"Degrees of Freedom: {df_t:.4f}")
-    loc = print(f"Location: {loc_t:.4f}")
-    scale = print(f"Scale: {scale_t:.4f}")
-    variance = print(f"Variance: {variance_t:.4f}")
-    kurtosis = print(f"Kurtosis: {'Infinite' if np.isinf(kurtosis_t) else f'{kurtosis_t:.4f}'}")
-
-    return fittdpam, dof, loc, scale, variance, kurtosis
-
-def plotFitTDist(df,companyName):
-
-    # Plot histogram with normal and t-distribution curves
-    fig = plt.figure(figsize=(10, 5))
-    count, bins, _ = plt.hist(df['Log_Return'], bins=50, alpha=0.7, color='#389cfc', edgecolor='black', density=True)
-
-    # Compute normal and t-distribution curves
-    x = np.linspace(bins[0], bins[-1], 100)
-    pdf_norm = norm.pdf(x, np.mean(df['Log_Return']), np.std(df['Log_Return']))
-    pdf_t = t.pdf(x, df_t, loc=loc_t, scale=scale_t)
-
-    fCompany = f"{companyName.title()}"
-
-
-    plt.plot(x, pdf_norm, color='red', lw=2, label=f'Normal Dist (μ={np.mean(df["Log_Return"]):.2f}, σ²={np.var(df["Log_Return"]):.2f})')
-    plt.plot(x, pdf_t, color='green', lw=2, label=f't-Dist (df={df_t:.2f}, scale={scale_t:.2f})')
-
-    plt.xlabel("Log-Returns (%)")
-    plt.ylabel("Density")
-    plt.title(f"Histogram of {fCompany} Log-Returns with Normal and t-Distributions")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    return fig
-
 '''def fitGARCH(df):
     # Prepare the data
     global returns
@@ -215,6 +211,26 @@ def plotFitTDist(df,companyName):
     fig = garch_fit.plot()
 
     return fig, returns, garch_fit'''
+
+def autocorrChecks(df):
+    # Compute autocorrelation of log-returns
+    acf = sm.tsa.acf(df['Log_Return'], nlags=20, fft=False)
+    pacf = sm.tsa.pacf(df['Log_Return'], nlags=20)
+
+    # Plot ACF and PACF
+    fig, axes = plt.subplots(1, 2, figsize=(12, 6))
+
+    # Plot ACF
+    sm.graphics.tsa.plot_acf(df['Log_Return'], lags=20, ax=axes[0])
+    axes[0].set_title("Autocorrelation Function (ACF)")
+
+    # Plot PACF
+    sm.graphics.tsa.plot_pacf(df['Log_Return'], lags=20, ax=axes[1])
+    axes[1].set_title("Partial Autocorrelation Function (PACF)")
+
+    return fig, axes
+
+
 
 def fitGARCH(df):
     # Prepare the data
