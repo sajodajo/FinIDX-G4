@@ -1,10 +1,14 @@
+import numpy as np
+from scipy import stats
+from scipy.stats import t
+
 def describeGarchModel(bestResult):
     """Generate a business-friendly description of the GARCH model results"""
     model_params = bestResult.params
-    
+
     # Calculate persistence
-    persistence = sum([model_params[f'alpha[{i+1}]'] for i in range(bestResult.p) if f'alpha[{i+1}]' in model_params] + 
-                     [model_params[f'beta[{i+1}]'] for i in range(bestResult.q) if f'beta[{i+1}]' in model_params])
+    persistence = sum([model_params[f'alpha[{i+1}]'] for i in range(bestResult.model.volatility.p) if f'alpha[{i+1}]' in model_params] + 
+                     [model_params[f'beta[{i+1}]'] for i in range(bestResult.model.volatility.q) if f'beta[{i+1}]' in model_params])
     
     # Business-friendly interpretation
     summary = f"Our volatility model shows that "
@@ -17,7 +21,14 @@ def describeGarchModel(bestResult):
         summary += f"market shocks tend to dissipate relatively quickly. When volatility spikes, it typically returns to normal levels within a short period. This suggests short-term hedging strategies may be sufficient."
     
     # Add more business context
-    if bestResult.p > 1 or bestResult.q > 1:
+    if hasattr(bestResult.model, "volatility"):  # Check if a volatility model exists
+        p = bestResult.model.volatility.p
+        q = bestResult.model.volatility.q
+    else:
+        p = 0
+        q = 0  # No GARCH terms if no volatility model exists
+
+    if p > 1 or q > 1:
         summary += f" The model also indicates a complex relationship between past and current volatility, suggesting that simple risk metrics may not capture the full risk profile of this asset."
     
     return summary
@@ -212,9 +223,8 @@ def generateExecutiveSummary(garch_fit, returns, companyName):
     var_95 = np.percentile(returns, 5) * portfolio_value
     
     # Business-friendly executive summary
-    summary = f"# Executive Summary: {companyName} Risk Profile\n\n"
     
-    summary += f"## Key Risk Metrics\n"
+    summary = f"## {companyName} Key Risk Metrics\n"
     summary += f"* **Expected Annual Volatility:** {annualized_vol:.1f}%\n"
     summary += f"* **Average Daily Return:** {avg_return:.3f}%\n"
     summary += f"* **Risk-Adjusted Return (Sharpe):** {sharpe:.2f}\n"
@@ -277,142 +287,3 @@ def generateExecutiveSummary(garch_fit, returns, companyName):
         summary += f"{i+1}. {rec}\n"
     
     return summary
-
-
-def generateFullReport(df, returns, garch_fit, bestResult, companyName):
-    """Generate a comprehensive business-oriented risk report"""
-    # Import required libraries at the start of your script
-    import numpy as np
-    from scipy import stats
-    from scipy.stats import t, norm
-    import matplotlib.pyplot as plt
-    import seaborn as sns
-    from statsmodels.graphics.tsaplots import plot_acf
-    import pandas as pd
-    from datetime import datetime
-    
-    # Calculate key statistics for the report
-    avg_return = returns.mean() * 100  # Convert to percentage
-    annualized_return = avg_return * 252  # Annualize
-    annualized_vol = returns.std() * np.sqrt(252) * 100  # Convert to percentage and annualize
-    
-    # Calculate Sharpe ratio (assuming risk-free rate of 2%)
-    risk_free_annual = 0.02
-    risk_free_daily = risk_free_annual / 252
-    sharpe = (returns.mean() - risk_free_daily) / returns.std() * np.sqrt(252)
-    
-    # Calculate drawdowns
-    cumulative_returns = (1 + returns).cumprod()
-    running_max = cumulative_returns.cummax()
-    drawdown = (cumulative_returns / running_max - 1) * 100
-    max_drawdown = drawdown.min()
-    
-    # Calculate VaR metrics
-    confidence_levels = np.linspace(0.95, 0.99, 5)
-    VaR_hist = [np.percentile(returns, (1 - alpha) * 100) for alpha in confidence_levels]
-    VaR_norm = [norm.ppf(1 - alpha, loc=np.mean(returns), scale=np.std(returns)) for alpha in confidence_levels]
-    df_t, loc_t, scale_t = t.fit(returns)
-    VaR_t = [loc_t + scale_t * t.ppf(1 - alpha, df_t) for alpha in confidence_levels]
-    
-    # Business-friendly report
-    fCompany = f"{companyName}"
-    report_date = datetime.now().strftime("%B %d, %Y")
-    
-    report = f"# Risk Analysis Report: {fCompany}\n"
-    report += f"**Report Date:** {report_date}\n\n"
-    
-    # Executive summary
-    report += "## Executive Summary\n\n"
-    report += describeGarchModel(bestResult) + "\n\n"
-    report += summarizeVolatilityPatterns(garch_fit, returns) + "\n\n"
-    
-    # Key metrics table
-    report += "## Key Risk Metrics\n\n"
-    report += "| Metric | Value |\n"
-    report += "|--------|-------|\n"
-    report += f"| Annualized Return | {annualized_return:.2f}% |\n"
-    report += f"| Annualized Volatility | {annualized_vol:.2f}% |\n"
-    report += f"| Sharpe Ratio | {sharpe:.2f} |\n"
-    report += f"| Maximum Drawdown | {abs(max_drawdown):.2f}% |\n"
-    report += f"| Daily VaR (95%) | {abs(VaR_hist[0] * 100):.2f}% |\n"
-    report += f"| Daily VaR (99%) | {abs(VaR_hist[-1] * 100):.2f}% |\n\n"
-    
-    # Risk assessment
-    report += "## Detailed Risk Assessment\n\n"
-    report += "### Volatility Analysis\n"
-    report += interpretResidualAnalysis(garch_fit) + "\n\n"
-    
-    report += "### Value-at-Risk Analysis\n"
-    report += analyzeVaRResults(confidence_levels, VaR_hist, VaR_norm, VaR_t, companyName) + "\n\n"
-    
-    report += "### Dynamic Risk Assessment\n"
-    report += analyzeDynamicRiskMeasures(garch_fit, companyName, returns) + "\n\n"
-    
-    # Business implications
-    report += "## Business Implications\n\n"
-    
-    # Generate business implications based on the analysis
-    implications = []
-    
-    # Volatility persistence
-    model_params = bestResult.params
-    persistence = sum([model_params[f'alpha[{i+1}]'] for i in range(bestResult.p) if f'alpha[{i+1}]' in model_params] + 
-                     [model_params[f'beta[{i+1}]'] for i in range(bestResult.q) if f'beta[{i+1}]' in model_params])
-    
-    if persistence > 0.95:
-        implications.append("**Long-Term Risk Planning:** The high persistence in volatility means that when markets become turbulent, they tend to stay that way for extended periods. This suggests:  \n- Implementing longer-term hedging strategies rather than short-term tactical adjustments  \n- Developing contingency plans that can be sustained for several months during stress periods")
-    
-    # Risk-return profile
-    if sharpe < 0.5:
-        implications.append("**Risk-Return Optimization:** The current risk-return profile suggests inadequate compensation for the volatility risk. Consider:  \n- Restructuring the position to improve the risk-adjusted return  \n- Exploring alternative investments with more favorable risk-return characteristics")
-    
-    # Extreme events
-    cond_vol = garch_fit.conditional_volatility
-    volatility_ratio = cond_vol.max() / cond_vol.mean()
-    if volatility_ratio > 3:
-        implications.append(f"**Extreme Event Preparedness:** The analysis shows that extreme volatility events (up to {volatility_ratio:.1f}x normal levels) are possible. This requires:  \n- Stress testing portfolios under more severe scenarios than standard models suggest  \n- Maintaining sufficient liquidity to withstand extended periods of market stress")
-    
-    # Current risk trend
-    recent_window = min(20, len(cond_vol))
-    recent_vol = cond_vol[-recent_window:]
-    recent_avg = recent_vol.mean()
-    vol_change = (recent_avg - cond_vol.mean()) / cond_vol.mean() * 100
-    
-    if vol_change > 10:
-        implications.append(f"**Current Market Conditions:** Our analysis indicates a {vol_change:.0f}% increase in current risk levels compared to historical averages. This suggests:  \n- Implementing tactical risk reduction in the near term  \n- Exercising caution with new positions until volatility normalizes")
-    elif vol_change < -10:
-        implications.append(f"**Current Market Conditions:** Our analysis indicates a {abs(vol_change):.0f}% decrease in current risk levels compared to historical averages. This suggests:  \n- A potential opportunity to increase positions at a lower risk point  \n- The ability to implement strategic positions with improved risk-adjusted returns")
-    
-    # Add implications to report
-    for i, imp in enumerate(implications):
-        report += f"{i+1}. {imp}\n\n"
-    
-    # Recommendations
-    report += "## Recommendations\n\n"
-    
-    # Generate recommendations based on the analysis
-    recommendations = []
-    
-    if persistence > 0.95:
-        recommendations.append("**Extend Hedging Horizon:** Implement longer-dated hedges to account for the persistent nature of volatility")
-    
-    if volatility_ratio > 3:
-        recommendations.append("**Enhance Stress Testing:** Incorporate more extreme scenarios in stress tests that reflect the observed volatility spikes")
-    
-    if sharpe < 0.5 and annualized_vol > 20:
-        recommendations.append("**Optimize Risk-Return:** Consider restructuring the position to improve the risk-adjusted return")
-    
-    if vol_change > 10:
-        recommendations.append("**Tactical Risk Reduction:** Temporarily reduce position sizes or implement additional hedges until volatility normalizes")
-    elif vol_change < -10:
-        recommendations.append("**Strategic Opportunity:** Consider increasing positions to take advantage of the favorable risk environment")
-    
-    # Add recommendations to report
-    for i, rec in enumerate(recommendations):
-        report += f"{i+1}. {rec}\n\n"
-    
-    # Methodology note
-    report += "## Methodology\n\n"
-    report += "This analysis was conducted using advanced time series modeling techniques, including GARCH volatility modeling and extreme value theory. The approach captures both the dynamic nature of market risk and the potential for extreme events beyond what traditional models suggest.\n\n"
-    
-    return report

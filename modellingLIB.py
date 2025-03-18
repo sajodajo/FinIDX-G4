@@ -250,134 +250,6 @@ def visVolatility(df,returns, garch_fit):
     return fig, axs
 
 
-def residualAnalysis(garch_fit):
-    # Compute standardized residuals
-    std_residuals = garch_fit.resid / garch_fit.conditional_volatility
-    std_residuals = std_residuals.dropna()
-
-    # Set up 2x2 residual plots
-    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
-
-    # 1. Standardized residual time series
-    sns.lineplot(x=std_residuals.index, y=std_residuals, ax=axes[0, 0], color='#389cfc')
-    axes[0, 0].set_title("Standardized Residuals Time Series")
-    axes[0, 0].set_ylabel("Standardized Residuals")
-    axes[0, 0].axhline(y=0, color='black', linestyle='--', alpha=0.6)
-
-    # 2. ACF of standardized residuals
-    plot_acf(std_residuals, ax=axes[0, 1], lags=len(std_residuals) - 1)
-    axes[0, 1].set_title("ACF of Standardized Residuals")
-
-    # 3. ACF of squared standardized residuals
-    plot_acf(std_residuals, ax=axes[1, 0], lags=len(std_residuals) - 1)
-    axes[1, 0].set_title("ACF of Squared Standardized Residuals")
-
-    # 4. QQ-plot with estimated t-distribution
-    df_t, loc_t, scale_t = t.fit(std_residuals)
-    x = np.linspace(min(std_residuals), max(std_residuals), 100)
-    pdf_t = t.pdf(x, df_t, loc=loc_t, scale=scale_t)
-
-    axes[1, 1].hist(std_residuals, bins=50, density=True, alpha=0.6, color='#389cfc', edgecolor='black', label="Residuals")
-    axes[1, 1].plot(x, pdf_t, color='red', lw=2, label=f't-Dist (df={df_t:.2f})')
-    axes[1, 1].set_title("Histogram of Standardized Residuals with t-Distribution")
-    axes[1, 1].legend()
-
-    return fig, axes
-
-
-def VaR(returns,companyName):
-  
-    fCompany = f"{companyName.title()}"
-
-    # Confidence levels for VaR
-    global confidence_levels
-    confidence_levels = np.linspace(0.975, 0.9999, 100)
-
-    # Compute VaR for different confidence levels
-    global VaR_hist, VaR_norm, VaR_t
-    VaR_hist = [np.percentile(returns, (1 - alpha) * 100) for alpha in confidence_levels]
-    VaR_norm = [norm.ppf(1 - alpha, loc=np.mean(returns), scale=np.std(returns)) for alpha in confidence_levels]
-    global df_t, loc_t, scale_t
-    df_t, loc_t, scale_t = t.fit(returns)
-    VaR_t = [loc_t + scale_t * t.ppf(1 - alpha, df_t) for alpha in confidence_levels]
-
-    # Plot VaR estimates as a function of confidence level
-    fig = plt.figure(figsize=(10, 6))
-    plt.plot(confidence_levels * 100, VaR_hist, label='Historical VaR', linestyle='dashed', color='black')
-    plt.plot(confidence_levels * 100, VaR_norm, label='Normal VaR', linestyle='dotted', color='red')
-    plt.plot(confidence_levels * 100, VaR_t, label='t-Distribution VaR', linestyle='solid', color='#389cfc')
-
-    plt.xlabel("Confidence Level (%)")
-    plt.ylabel("Log-Returns")
-    plt.title(f"{fCompany} VaR Estimates Across Confidence Levels")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    return fig, confidence_levels
-
-
-def expectedShortfall(confidence_levels,companyName,returns):
-    # Compute Expected Shortfall (ES) using the proper formulas
-    mean_return, std_return = returns.mean(), returns.std()
-    phi_norm = norm.pdf(norm.ppf(confidence_levels))
-    ES_norm = mean_return - std_return * (phi_norm / (1 - confidence_levels))
-
-    fCompany = f"{companyName.title()}"
-
-    # Compute t-Distribution Expected Shortfall
-    t_alpha = t.ppf(confidence_levels, df_t)
-    t_pdf_alpha = t.pdf(t_alpha, df_t)
-    ES_t = loc_t - scale_t * (t_pdf_alpha / (1 - confidence_levels)) * (df_t + t_alpha**2) / (df_t - 1)
-
-    # Compute Historical Expected Shortfall (ES) directly from data
-    ES_hist = [returns[returns <= VaR_hist[i]].mean() for i in range(len(confidence_levels))]
-
-    # Plot Expected Shortfall (ES) estimates as a function of confidence level
-    fig = plt.figure(figsize=(10, 6))
-    plt.plot(confidence_levels * 100, ES_hist, label='Historical ES', linestyle='dashed', color='black')
-    plt.plot(confidence_levels * 100, ES_norm, label='Normal ES', linestyle='dotted', color='red')
-    plt.plot(confidence_levels * 100, ES_t, label='t-Distribution ES', linestyle='solid', color='#389cfc')
-    plt.xlabel("Confidence Level (%)")
-    plt.ylabel("Log-Returns")
-    plt.title(f"{fCompany} Expected Shortfall (ES) Estimates Across Confidence Levels")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    return fig
-
-
-def dynamicRM(garch_fit,companyName,returns):
-    # Extract conditional volatility and standardized residuals
-    std_residuals = garch_fit.resid / garch_fit.conditional_volatility
-    std_residuals = std_residuals.dropna()
-    cond_volatility = garch_fit.conditional_volatility.dropna()
-
-    # Fit t-distribution to standardized residuals
-    df_t, loc_t, scale_t = t.fit(std_residuals)
-
-    fCompany = f"{companyName.title()}"
-
-    # Compute dynamic VaR at 95% and 99%
-    VaR_95 = -scale_t * t.ppf(0.05, df_t) * cond_volatility
-    VaR_99 = -scale_t * t.ppf(0.01, df_t) * cond_volatility
-
-    # Plot time series of negative log-returns with dynamic VaR
-    fig = plt.figure(figsize=(12, 6))
-    plt.plot(-returns, label="Negative Log-Returns", color='blue', alpha=0.6)
-    plt.plot(VaR_95, label="95% Dynamic VaR", linestyle='dashed', color='#389cfc')
-    plt.plot(VaR_99, label="99% Dynamic VaR", linestyle='solid', color='black')
-
-    plt.xlabel("Date")
-    plt.ylabel("Log-Returns")
-    plt.title(f"{fCompany} Negative Log-Returns with Dynamic VaR Estimates")
-    plt.legend()
-    plt.grid()
-    plt.show()
-
-    return fig
-
 def adf_test_summary(df, column='Log_Return', signif=0.05):
     """Performs ADF test and returns results as a DataFrame and interpretation text."""
     series = df[column].dropna()
@@ -573,3 +445,132 @@ def visVolatility(df,returns, garch_fit):
     axs[1].grid(True)
 
     return fig, axs
+
+
+def residualAnalysis(garch_fit):
+    # Compute standardized residuals
+    std_residuals = garch_fit.resid / garch_fit.conditional_volatility
+    std_residuals = std_residuals.dropna()
+
+    # Set up 2x2 residual plots
+    fig, axes = plt.subplots(2, 2, figsize=(12, 10))
+
+    # 1. Standardized residual time series
+    sns.lineplot(x=std_residuals.index, y=std_residuals, ax=axes[0, 0], color='#389cfc')
+    axes[0, 0].set_title("Standardized Residuals Time Series")
+    axes[0, 0].set_ylabel("Standardized Residuals")
+    axes[0, 0].axhline(y=0, color='black', linestyle='--', alpha=0.6)
+
+    # 2. ACF of standardized residuals
+    plot_acf(std_residuals, ax=axes[0, 1], lags=len(std_residuals) - 1)
+    axes[0, 1].set_title("ACF of Standardized Residuals")
+
+    # 3. ACF of squared standardized residuals
+    plot_acf(std_residuals, ax=axes[1, 0], lags=len(std_residuals) - 1)
+    axes[1, 0].set_title("ACF of Squared Standardized Residuals")
+
+    # 4. QQ-plot with estimated t-distribution
+    df_t, loc_t, scale_t = t.fit(std_residuals)
+    x = np.linspace(min(std_residuals), max(std_residuals), 100)
+    pdf_t = t.pdf(x, df_t, loc=loc_t, scale=scale_t)
+
+    axes[1, 1].hist(std_residuals, bins=50, density=True, alpha=0.6, color='#389cfc', edgecolor='black', label="Residuals")
+    axes[1, 1].plot(x, pdf_t, color='red', lw=2, label=f't-Dist (df={df_t:.2f})')
+    axes[1, 1].set_title("Histogram of Standardized Residuals with t-Distribution")
+    axes[1, 1].legend()
+
+    return fig, axes
+
+
+def VaR(returns,companyName):
+  
+    fCompany = f"{companyName.title()}"
+
+    # Confidence levels for VaR
+    global confidence_levels
+    confidence_levels = np.linspace(0.975, 0.9999, 100)
+
+    # Compute VaR for different confidence levels
+    global VaR_hist, VaR_norm, VaR_t
+    VaR_hist = [np.percentile(returns, (1 - alpha) * 100) for alpha in confidence_levels]
+    VaR_norm = [norm.ppf(1 - alpha, loc=np.mean(returns), scale=np.std(returns)) for alpha in confidence_levels]
+    global df_t, loc_t, scale_t
+    df_t, loc_t, scale_t = t.fit(returns)
+    VaR_t = [loc_t + scale_t * t.ppf(1 - alpha, df_t) for alpha in confidence_levels]
+
+    # Plot VaR estimates as a function of confidence level
+    fig = plt.figure(figsize=(10, 6))
+    plt.plot(confidence_levels * 100, VaR_hist, label='Historical VaR', linestyle='dashed', color='black')
+    plt.plot(confidence_levels * 100, VaR_norm, label='Normal VaR', linestyle='dotted', color='red')
+    plt.plot(confidence_levels * 100, VaR_t, label='t-Distribution VaR', linestyle='solid', color='#389cfc')
+
+    plt.xlabel("Confidence Level (%)")
+    plt.ylabel("Log-Returns")
+    plt.title(f"{fCompany} VaR Estimates Across Confidence Levels")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    return fig, confidence_levels, VaR_hist, VaR_norm, VaR_t
+
+
+def expectedShortfall(confidence_levels,companyName,returns):
+    # Compute Expected Shortfall (ES) using the proper formulas
+    mean_return, std_return = returns.mean(), returns.std()
+    phi_norm = norm.pdf(norm.ppf(confidence_levels))
+    ES_norm = mean_return - std_return * (phi_norm / (1 - confidence_levels))
+
+    fCompany = f"{companyName.title()}"
+
+    # Compute t-Distribution Expected Shortfall
+    t_alpha = t.ppf(confidence_levels, df_t)
+    t_pdf_alpha = t.pdf(t_alpha, df_t)
+    ES_t = loc_t - scale_t * (t_pdf_alpha / (1 - confidence_levels)) * (df_t + t_alpha**2) / (df_t - 1)
+
+    # Compute Historical Expected Shortfall (ES) directly from data
+    ES_hist = [returns[returns <= VaR_hist[i]].mean() for i in range(len(confidence_levels))]
+
+    # Plot Expected Shortfall (ES) estimates as a function of confidence level
+    fig = plt.figure(figsize=(10, 6))
+    plt.plot(confidence_levels * 100, ES_hist, label='Historical ES', linestyle='dashed', color='black')
+    plt.plot(confidence_levels * 100, ES_norm, label='Normal ES', linestyle='dotted', color='red')
+    plt.plot(confidence_levels * 100, ES_t, label='t-Distribution ES', linestyle='solid', color='#389cfc')
+    plt.xlabel("Confidence Level (%)")
+    plt.ylabel("Log-Returns")
+    plt.title(f"{fCompany} Expected Shortfall (ES) Estimates Across Confidence Levels")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    return fig
+
+
+def dynamicRM(garch_fit,companyName,returns):
+    # Extract conditional volatility and standardized residuals
+    std_residuals = garch_fit.resid / garch_fit.conditional_volatility
+    std_residuals = std_residuals.dropna()
+    cond_volatility = garch_fit.conditional_volatility.dropna()
+
+    # Fit t-distribution to standardized residuals
+    df_t, loc_t, scale_t = t.fit(std_residuals)
+
+    fCompany = f"{companyName.title()}"
+
+    # Compute dynamic VaR at 95% and 99%
+    VaR_95 = -scale_t * t.ppf(0.05, df_t) * cond_volatility
+    VaR_99 = -scale_t * t.ppf(0.01, df_t) * cond_volatility
+
+    # Plot time series of negative log-returns with dynamic VaR
+    fig = plt.figure(figsize=(12, 6))
+    plt.plot(-returns, label="Negative Log-Returns", color='blue', alpha=0.6)
+    plt.plot(VaR_95, label="95% Dynamic VaR", linestyle='dashed', color='#389cfc')
+    plt.plot(VaR_99, label="99% Dynamic VaR", linestyle='solid', color='black')
+
+    plt.xlabel("Date")
+    plt.ylabel("Log-Returns")
+    plt.title(f"{fCompany} Negative Log-Returns with Dynamic VaR Estimates")
+    plt.legend()
+    plt.grid()
+    plt.show()
+
+    return fig

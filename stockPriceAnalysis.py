@@ -5,7 +5,7 @@ import numpy as np
 import arch
 import pandas as pd
 from pySimFinLIB import pySimFin
-import conclusions
+import conclusionsLIB as conclusions
 
 
 st.set_page_config(layout = 'wide')
@@ -251,12 +251,22 @@ We start by taking <b>{best_model}</b> as the best model from the analysis above
 
 if best_model == "ARCH":
     bestResult = resultARCH
+elif best_model == "ARCH-t":
+    bestResult = resultARCHt
 elif best_model == "GARCH":
     bestResult = resultGARCH
+elif best_model == "GARCH-t":
+    bestResult = resultGARCHt
 elif best_model == "GJR-GARCH":
     bestResult = resultGJRGARCH
-else:
+elif best_model == "GJR-GARCH-t":
+    bestResult = resultGJRGARCHt
+elif best_model == "EGARCH":
     bestResult = resultEGARCH
+elif best_model == "EGARCH-t":
+    bestResult = resultEGARCHt
+else:
+    raise ValueError(f"Unknown model type: {best_model}")
 
 tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs(["Residuals vs C.V.","Volatility","Residual Analysis","VaR Analysis","Expected Shortfall","Dynamic Risk Modelling"])
 
@@ -284,7 +294,7 @@ with tab4:
     col1, col2, col3 = st.columns([1, 3, 1])  
     with col2:
         st.subheader(f"{best_model} -  VaR Analysis")
-        fig, confidence_levels = modellingLIB.VaR(returns,companyName)
+        fig, confidence_levels, VaR_hist, VaR_norm, VaR_t = modellingLIB.VaR(returns,companyName)
         st.pyplot(fig)
 
 with tab5:
@@ -308,8 +318,16 @@ st.markdown(
     unsafe_allow_html=True
 )
 
+## CONCLUSIONS ##
+
 st.write(conclusions.describeGarchModel(bestResult))
 
+st.write(conclusions.summarizeVolatilityPatterns(bestResult, returns))
 
+st.write(conclusions.interpretResidualAnalysis(bestResult))
 
+st.write(conclusions.analyzeVaRResults(confidence_levels, VaR_hist, VaR_norm, VaR_t, companyName))
 
+st.write(conclusions.analyzeDynamicRiskMeasures(bestResult, companyName, returns))
+
+st.write(conclusions.generateExecutiveSummary(bestResult, returns, companyName))
