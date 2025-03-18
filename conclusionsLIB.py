@@ -211,7 +211,7 @@ def generateExecutiveSummary(garch_fit, returns, companyName):
     volatility_ratio = max_vol / mean_vol
     
     # Calculate average daily return and annualized volatility
-    avg_return = returns.mean() * 100  # Convert to percentage
+    avg_return = returns.mean()  # Convert to percentage
     annualized_vol = mean_vol * np.sqrt(252) # Convert to percentage and annualize
     
     # Calculate Sharpe ratio (assuming risk-free rate of 2%)
