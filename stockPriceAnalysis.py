@@ -5,6 +5,7 @@ import numpy as np
 import arch
 import pandas as pd
 from pySimFinLIB import pySimFin
+import conclusions
 
 
 st.set_page_config(layout = 'wide')
@@ -307,7 +308,7 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
+st.write(conclusions.describeGarchModel(bestResult))
 
 
 
