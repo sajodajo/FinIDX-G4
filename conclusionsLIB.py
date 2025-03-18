@@ -229,6 +229,10 @@ def generateExecutiveSummary(garch_fit, returns, companyName):
     summary += f"* **Average Daily Return:** {avg_return:.3f}%\n"
     summary += f"* **Risk-Adjusted Return (Sharpe):** {sharpe:.2f}\n"
     summary += f"* **Daily Value-at-Risk (95%):** ${abs(var_95):,.0f} on a $1M position\n\n"
+    summary += f"* **Daily Value-at-Risk (95%):** ${abs(var_95):,.0f} on a $1M position\n\n"
+
+
+
     
     summary += f"## Risk Assessment\n"
     
