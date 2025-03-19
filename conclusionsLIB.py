@@ -220,7 +220,7 @@ def generateExecutiveSummary(garch_fit, returns, companyName):
     
     # Calculate 95% VaR for a $1M portfolio
     portfolio_value = 1000000
-    var_95 = np.percentile(returns, 5) * portfolio_value
+    var_95 = -stats.norm.ppf(0.05) * (returns/100).std() * portfolio_value
     
     # Business-friendly executive summary
     
@@ -228,8 +228,9 @@ def generateExecutiveSummary(garch_fit, returns, companyName):
     summary += f"* **Expected Annual Volatility:** {annualized_vol:.1f}%\n"
     summary += f"* **Average Daily Return:** {avg_return:.3f}%\n"
     summary += f"* **Risk-Adjusted Return (Sharpe):** {sharpe:.2f}\n"
-    summary += f"* **Daily Value-at-Risk (95%):** ${abs(var_95):,.0f} on a $1M position\n\n"
-    summary += f"* **Daily Value-at-Risk (95%):** ${abs(var_95):,.0f} on a $1M position\n\n"
+    var95 = f"{abs(var_95):,.0f}"
+    endstring = "on a $1M position\n\n"
+    summary += f"* **Daily Value-at-Risk (95%):** \${var95}  " + endstring
 
 
 
