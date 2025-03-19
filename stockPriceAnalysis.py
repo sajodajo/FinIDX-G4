@@ -53,7 +53,7 @@ The data is obtained from SimFin’s open financial database, which compiles fin
 
 col1, col2, col3 = st.columns([1, 4, 1])  
 with col2:
-    st.image("Media/projectFlow.png", width=1200)
+    st.image("00 Media/projectFlow.png", width=1200)
 
 st.markdown('''
 <p style='font-size:18px; text-align:justify; color:black'>
@@ -89,7 +89,7 @@ API call for financial data
 
 col1, col2, col3 = st.columns([3, 1, 1])  
 with col1:
-    st.image("Media/EDAsnap1.png", width=1200)
+    st.image("00 Media/EDAsnap1.png", width=1200)
 
 st.markdown('''
 <p style='font-size:18px; text-align:left; color:black'>
@@ -98,7 +98,7 @@ Addition of new calculated columns
 
 col1, col2, col3 = st.columns([3, 1, 1])  
 with col1:
-    st.image("Media/newColumns.png", width=1200)
+    st.image("00 Media/newColumns.png", width=1200)
 
 
 st.markdown(
