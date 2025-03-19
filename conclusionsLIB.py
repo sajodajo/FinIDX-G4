@@ -121,8 +121,8 @@ def analyzeVaRResults(confidence_levels, VaR_hist, VaR_norm, VaR_t, companyName)
     
     # Translate to dollar terms with hypothetical portfolio
     portfolio_value = 1000000  # $1 million portfolio for illustration
-    dollar_var_95 = -VaR_95_hist * portfolio_value
-    dollar_var_99 = -VaR_99_hist * portfolio_value
+    dollar_var_95 = -VaR_95_hist * portfolio_value / 100
+    dollar_var_99 = -VaR_99_hist * portfolio_value / 100
     
     summary += f"in a typical worst-case day (95% confidence), you could expect to lose up to {dollar_var_95:,.0f} dollars on a {portfolio_value:,.0f} dollar position. "
     summary += f"In a severe scenario (99% confidence), losses could reach {dollar_var_99:,.0f} dollars. "

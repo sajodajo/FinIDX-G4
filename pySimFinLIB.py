@@ -57,6 +57,6 @@ class pySimFin:
 
         raw = pd.DataFrame(response)
 
-        raw = raw[~raw['isin'].isna()]
+        cleaned = raw[~raw['isin'].isna()]
 
-        return raw
+        return cleaned

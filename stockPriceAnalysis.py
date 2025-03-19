@@ -57,7 +57,7 @@ with col2:
 
 st.markdown('''
 <p style='font-size:18px; text-align:justify; color:black'>
-2 custom libraries were created for this, one for the SimFin API and the other for the modelling functions. The SimFin library is used to retrieve the company list and financial data, while the modelling library contains the functions for data cleaning, exploratory data analysis, and volatility modelling.<br><br>
+3 custom libraries were created for this, one for the SimFin API, one for the modelling functions, and one for the conclusions. The SimFin library is used to retrieve the company list and financial data, the modelling library contains the functions for data cleaning, exploratory data analysis, and volatility modelling, and the conclusions library took the above data and outputted text conclusions.<br><br>
 </p>
 ''', unsafe_allow_html=True)
 
